@@ -9,6 +9,7 @@ import { HideLoading, ShowLoading } from "../../../../redux/alerts";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { getAvatarUrl } from "../../../../utils/avatarUtils";
 
 const Posts = () => {
   const dispatch = useDispatch();
@@ -101,7 +102,7 @@ const Post = ({ user, content, image, timestamp, likes, comments }) => {
           <Link to={`/dashboard/profile/${user.id}`}>
             <div className="flex items-center mb-4">
               <img
-                src={user.profilePicture || "/images/defppic.jpg"}
+                src={getAvatarUrl(user.profilePicture, user.name.split(' ')[0], user.name.split(' ').slice(1).join(' '))}
                 alt={`${user.name}'s profile`}
                 className="w-12 h-12 rounded-full mr-4 object-cover"
               />

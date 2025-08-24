@@ -12,6 +12,7 @@ import Cookies from "js-cookie";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import React from "react";
 import { useSelector } from "react-redux";
+import { getAvatarUrl } from "../utils/avatarUtils";
 
 const privateNavigation = [
   { name: "Dashboard", href: "/dashboard" },
@@ -122,7 +123,7 @@ export default function Navbar() {
                     <span className="sr-only">Open user menu</span>
                     <img
                       alt=""
-                      src={alumni?.profilePicture || "/images/defppic.jpg"}
+                      src={getAvatarUrl(alumni?.profilePicture, alumni?.firstName, alumni?.lastName)}
                       className="h-8 w-8 rounded-full object-cover"
                     />
                   </MenuButton>

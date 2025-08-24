@@ -1,18 +1,139 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import ReactMapGL, { Marker, Popup } from "react-map-gl";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
 import axios from "axios";
 import Supercluster from "supercluster";
 import Geocoder from "./Geocoder";
-import "mapbox-gl/dist/mapbox-gl.css";
+import "leaflet/dist/leaflet.css";
+
+// Fix for default markers in Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
+  iconUrl: require("leaflet/dist/images/marker-icon.png"),
+  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+});
 
 const supercluster = new Supercluster({
   radius: 75,
   maxZoom: 20,
 });
 
+// Custom cluster icon
+const createClusterIcon = (count) => {
+  return L.divIcon({
+    html: `<div class="cluster-marker">${count}</div>`,
+    className: "custom-cluster-icon",
+    iconSize: L.point(40, 40),
+  });
+};
+
+// Custom location pin icon
+const locationIcon = L.icon({
+  iconUrl: "/images/location-pin.png",
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32],
+});
+
+// Map component that handles clustering
+const MapWithClusters = ({ 
+  clusters, 
+  onMarkerClick, 
+  popupInfo, 
+  setPopupInfo,
+  supercluster,
+  mapRef,
+  navigate
+}) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (mapRef.current) {
+      mapRef.current = map;
+    }
+  }, [map, mapRef]);
+
+  const handleProfileClick = (e, profileId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPopupInfo(null); // Close popup first
+    navigate(`/dashboard/profile/${profileId}`);
+  };
+
+  return (
+    <>
+      {clusters.map((cluster) => {
+        const { cluster: isCluster, point_count } = cluster.properties;
+        const [longitude, latitude] = cluster.geometry.coordinates;
+
+        if (isCluster) {
+          return (
+            <Marker
+              key={`cluster-${cluster.id}`}
+              position={[latitude, longitude]}
+              icon={createClusterIcon(point_count)}
+              eventHandlers={{
+                click: () => {
+                  const zoom = Math.min(
+                    supercluster.getClusterExpansionZoom(cluster.id),
+                    20
+                  );
+                  map.setView([latitude, longitude], zoom, {
+                    animate: true,
+                    duration: 1.5,
+                  });
+                },
+              }}
+            />
+          );
+        }
+
+        return (
+          <Marker
+            key={`batchmate-${cluster.properties.id}`}
+            position={[latitude, longitude]}
+            icon={locationIcon}
+            eventHandlers={{
+              click: () => onMarkerClick(cluster),
+            }}
+          >
+            {popupInfo && popupInfo.properties.id === cluster.properties.id && (
+              <Popup
+                className="custom-popup"
+                closeButton={true}
+                onClose={() => setPopupInfo(null)}
+              >
+                <div className="bg-gray-900 p-4 rounded-lg text-white">
+                  <img
+                    src={cluster.properties?.profilePicture}
+                    alt="Profile"
+                    className="w-16 h-16 rounded-full mb-2 object-cover"
+                  />
+                  <button
+                    onClick={(e) => handleProfileClick(e, cluster.properties?.id)}
+                    className="hover:underline text-left w-full bg-transparent border-none text-white cursor-pointer"
+                  >
+                    <p className="hover:underline">
+                      <strong>{cluster.properties?.name}</strong>
+                    </p>
+                  </button>
+                  <p>{cluster.properties?.major}</p>
+                  <p>Graduation Year: {cluster.properties?.graduationYear}</p>
+                </div>
+              </Popup>
+            )}
+          </Marker>
+        );
+      })}
+    </>
+  );
+};
+
 const ConnectionsWithMap = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
@@ -22,10 +143,11 @@ const ConnectionsWithMap = () => {
   const [years, setYears] = useState([]);
   const [points, setPoints] = useState([]);
   const [clusters, setClusters] = useState([]);
-  const [bounds, setBounds] = useState([-180, -85, 180, 85]);
-  const [zoom, setZoom] = useState(0);
   const [popupInfo, setPopupInfo] = useState(null);
+  const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]); // India center
+  const [mapZoom, setMapZoom] = useState(5);
   const mapRef = useRef();
+
   const fetchBatchmates = async () => {
     try {
       const response = await axios.get(
@@ -119,7 +241,11 @@ const ConnectionsWithMap = () => {
       },
     }));
 
-    setPoints(filteredPoints); // Update points to reflect the filtered data
+    setPoints(filteredPoints);
+  };
+
+  const handleMarkerClick = (cluster) => {
+    setPopupInfo(cluster);
   };
 
   useEffect(() => {
@@ -131,15 +257,22 @@ const ConnectionsWithMap = () => {
   }, [search, selectedBranch, selectedYear]);
 
   useEffect(() => {
-    supercluster.load(points);
-    setClusters(supercluster.getClusters(bounds, zoom));
-  }, [points, zoom, bounds]);
-
-  useEffect(() => {
-    if (mapRef?.current) {
-      setBounds(mapRef?.current.getMap().getBounds().toArray().flat());
+    if (points.length > 0) {
+      supercluster.load(points);
+      const bounds = L.latLngBounds(
+        points.map((point) => [
+          point.geometry.coordinates[1],
+          point.geometry.coordinates[0],
+        ])
+      );
+      setClusters(supercluster.getClusters(bounds.toBBoxString(), 10));
+      
+      // Update map center and zoom to fit all points
+      if (mapRef.current) {
+        mapRef.current.fitBounds(bounds, { padding: [20, 20] });
+      }
     }
-  }, [mapRef?.current]);
+  }, [points]);
 
   return (
     <div className="bg-gray-900 max-h-screen px-8 py-0 text-white">
@@ -180,82 +313,28 @@ const ConnectionsWithMap = () => {
         </div>
       </div>
 
-      <div className="h-[60vh] rounded-lg">
-        <ReactMapGL
-          mapboxAccessToken={process.env.REACT_APP_MAPBOX_KEY}
-          mapStyle="mapbox://styles/mapbox/streets-v11"
-          ref={mapRef}
-          onZoomEnd={(e) => setZoom(Math.round(e.viewState.zoom))}
+      <div className="h-[60vh] rounded-lg relative">
+        <MapContainer
+          center={mapCenter}
+          zoom={mapZoom}
+          style={{ height: "100%", width: "100%" }}
+          zoomControl={false}
         >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
           <Geocoder />
-          {clusters.map((cluster) => {
-            const { cluster: isCluster, point_count } = cluster.properties;
-            const [longitude, latitude] = cluster.geometry.coordinates;
-            if (isCluster) {
-              return (
-                <Marker
-                  key={`cluster-${cluster.id}`}
-                  longitude={longitude}
-                  latitude={latitude}
-                >
-                  <div
-                    className="cluster-marker bg-blue-500 text-white rounded-full w-6 h-6"
-                    onClick={() => {
-                      const zoom = Math.min(
-                        supercluster.getClusterExpansionZoom(cluster.id),
-                        20
-                      );
-                      mapRef.current.flyTo({
-                        center: [longitude, latitude],
-                        zoom,
-                        speed: 1.5,
-                      });
-                    }}
-                  >
-                    {point_count}
-                  </div>
-                </Marker>
-              );
-            }
-            return (
-              <Marker
-                key={`batchmate-${cluster.properties.id}`}
-                longitude={longitude}
-                latitude={latitude}
-              >
-                <img
-                  src="/images/location-pin.png"
-                  alt="Location Pin"
-                  className="w-8 h-8 cursor-pointer"
-                  onClick={() => setPopupInfo(cluster)}
-                />
-              </Marker>
-            );
-          })}
-          {popupInfo && (
-            <Popup
-              longitude={popupInfo?.geometry?.coordinates[0]}
-              latitude={popupInfo?.geometry?.coordinates[1]}
-              closeOnClick={false}
-              onClose={() => setPopupInfo(null)}
-            >
-              <div className="bg-gray-900 p-4 rounded-lg">
-                <img
-                  src={popupInfo.properties?.profilePicture}
-                  alt="Profile"
-                  className="w-16 h-16 rounded-full mb-2 object-cover"
-                />
-                <Link to={`/dashboard/profile/${popupInfo?.properties?.id}`}>
-                  <p className="hover:underline">
-                    <strong>{popupInfo.properties?.name}</strong>
-                  </p>
-                </Link>
-                <p>{popupInfo.properties?.major}</p>
-                <p>Graduation Year: {popupInfo.properties?.graduationYear}</p>
-              </div>
-            </Popup>
-          )}
-        </ReactMapGL>
+          <MapWithClusters
+            clusters={clusters}
+            onMarkerClick={handleMarkerClick}
+            popupInfo={popupInfo}
+            setPopupInfo={setPopupInfo}
+            supercluster={supercluster}
+            mapRef={mapRef}
+            navigate={navigate}
+          />
+        </MapContainer>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { useParams } from "react-router-dom";
 import { ShowLoading, HideLoading } from "../../../redux/alerts";
 import { CometChat } from "@cometchat/chat-sdk-javascript";
 import { CometChatUIKit } from "@cometchat/chat-uikit-react";
+import { generateRandomAvatar, generateAvatarFromName, getAvatarUrl } from "../../../utils/avatarUtils";
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -39,6 +40,15 @@ export default function Profile() {
       ],
     });
   };
+
+  const deleteExperience = (index) => {
+    setProfile({
+      ...profile,
+      previousExperience: profile.previousExperience.filter((_, i) => i !== index),
+    });
+  };
+
+
 
   const toggleEdit = () => {
     setIsEditing(!isEditing);
@@ -198,16 +208,42 @@ export default function Profile() {
                   Profile Photo
                 </label>
                 {isEditing ? (
-                  <input
-                    className="appearance-none block w-full bg-gray-700 text-white border border-gray-600 rounded py-3 px-4 mb-3 focus:outline-none focus:border-indigo-500"
-                    id="profilePicture"
-                    type="file"
-                    name="profilePicture"
-                    onChange={handleFileChange}
-                  />
+                  <div className="space-y-3">
+                    <input
+                      className="appearance-none block w-full bg-gray-700 text-white border border-gray-600 rounded py-3 px-4 mb-3 focus:outline-none focus:border-indigo-500"
+                      id="profilePicture"
+                      type="file"
+                      name="profilePicture"
+                      onChange={handleFileChange}
+                    />
+                    <div className="flex space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const randomAvatar = generateRandomAvatar();
+                          setProfile({ ...profile, profilePicture: randomAvatar });
+                          toast.success("Random avatar generated!");
+                        }}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none text-sm"
+                      >
+                        Generate Random Avatar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nameAvatar = generateAvatarFromName(profile?.firstName, profile?.lastName);
+                          setProfile({ ...profile, profilePicture: nameAvatar });
+                          toast.success("Name-based avatar generated!");
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none text-sm"
+                      >
+                        Generate Name Avatar
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <img
-                    src={profile?.profilePicture || "/images/defppic.jpg"}
+                    src={getAvatarUrl(profile?.profilePicture, profile?.firstName, profile?.lastName)}
                     alt="Profile"
                     className="w-32 h-32 rounded-full object-cover mb-3"
                   />
@@ -634,6 +670,17 @@ export default function Profile() {
                         )}
                       </div>
                     </div>
+                    {isEditing && (
+                      <div className="flex justify-end mt-2">
+                        <button
+                          type="button"
+                          onClick={() => deleteExperience(index)}
+                          className="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none text-sm"
+                        >
+                          Delete Experience
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
                 {isEditing && (

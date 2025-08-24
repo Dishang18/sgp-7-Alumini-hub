@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { CometChat } from "@cometchat/chat-sdk-javascript";
 import { CometChatUIKit } from "@cometchat/chat-uikit-react";
+import { generateAvatarFromName } from "../../utils/avatarUtils";
 
 export default function Onboard() {
   const navigate = useNavigate();
@@ -134,6 +135,8 @@ export default function Onboard() {
         user.setName(name);
         if (response.data.data?.profilePicture) {
           user.setAvatar(response.data.data?.profilePicture);
+        } else {
+          user.setAvatar(generateAvatarFromName(response.data.data?.firstName, response.data.data?.lastName));
         }
         await CometChat.updateUser(
           user,

@@ -7,6 +7,7 @@ import { setAlumni } from "../../redux/alumni";
 import Cookies from "js-cookie";
 import { CometChat } from "@cometchat/chat-sdk-javascript";
 import { CometChatUIKit } from "@cometchat/chat-uikit-react";
+import { generateSignupAvatar } from "../../utils/avatarUtils";
 
 export default function AlumniSignupPage() {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ export default function AlumniSignupPage() {
         toast.success(response.data.message);
         var user = new CometChat.User(response.data.user._id);
         user.setName(formData.name);
-        user.setAvatar("https://aluminati.vercel.app/images/defppic.jpg");
+        user.setAvatar(generateSignupAvatar(formData.name));
         await CometChat.createUser(
           user,
           process.env.REACT_APP_COMET_AUTH_KEY
