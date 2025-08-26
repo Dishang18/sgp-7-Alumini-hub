@@ -155,7 +155,7 @@ export default function StartupOnboard() {
           </div>
 
           {/* Logo Upload */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <label
               className="block uppercase text-xs font-bold mb-2"
               htmlFor="logo"
@@ -169,7 +169,7 @@ export default function StartupOnboard() {
               onChange={handleFileChange}
               required
             />
-          </div>
+          </div> */}
 
           {/* Description */}
           <div className="mb-6">

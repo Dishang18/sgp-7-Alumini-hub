@@ -2,6 +2,7 @@ import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
 
 export default function CollegeLogin() {
   const navigate = useNavigate();
@@ -45,6 +46,12 @@ export default function CollegeLogin() {
 
   return (
     <>
+      {/* Simple Header */}
+      <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+        <Link to="/" className="text-xl font-bold">EduBond</Link>
+        <Link to="/" className="text-gray-300 hover:text-white">← Back to Home</Link>
+      </div>
+      
       <div className="bg-gray-900 w-full h-[90%] text-white flex flex-col items-center justify-center px-4">
         <div className="max-w-sm w-full  space-y-5">
           <div className="text-center pb-3">

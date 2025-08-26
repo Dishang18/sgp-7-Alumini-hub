@@ -23,6 +23,8 @@ const privateNavigation = [
 const publicNavigation = [
   { name: "Login", href: "/login" },
   { name: "Signup", href: "/signup" },
+  { name: "Admin", href: "/college" },
+  { name: "Startup", href: "/startup/login" },
 ];
 
 function classNames(...classes) {
@@ -31,14 +33,35 @@ function classNames(...classes) {
 
 export default function Navbar() {
   const { alumni } = useSelector((state) => state.alumni);
+  const { startup } = useSelector((state) => state.startup);
   const navigate = useNavigate();
-  const location = useLocation(); // Get current location to determine active link
+  const location = useLocation();
+
+  // Check for different types of authentication
+  const adminToken = Cookies.get("admin-token");
+  const startupToken = Cookies.get("startup-token");
+  const alumniToken = Cookies.get("token");
+
+  // Determine user type and authentication status
+  const isAdmin = !!adminToken;
+  const isStartup = !!startupToken;
+  const isAlumni = !!alumniToken && !!alumni;
 
   const handleLogout = () => {
+    // Remove all possible tokens
     Cookies.remove("token");
-    navigate("/"); // Navigate to home after logout
-    window.location.reload(); // Refresh to update UI
+    Cookies.remove("startup-token");
+    Cookies.remove("admin-token");
+    
+    // Clear Redux state and refresh
+    window.location.reload();
+    navigate("/");
   };
+
+  // Don't show navbar for admin and startup sections
+  if (location.pathname.startsWith("/college") || location.pathname.startsWith("/startup")) {
+    return null;
+  }
 
   return (
     <Disclosure as="nav" className="bg-gray-800">
@@ -66,7 +89,7 @@ export default function Navbar() {
             </div>
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex space-x-4">
-                {alumni
+                {isAlumni
                   ? privateNavigation.map((item) => {
                       const isActive = location.pathname === item.href;
                       return (
@@ -106,7 +129,7 @@ export default function Navbar() {
               </div>
             </div>
           </div>
-          {alumni && (
+          {isAlumni && (
             <div className="absolute inset-y-0 sm:right-0 right-12 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
               {/* <button
               type="button"
@@ -162,7 +185,7 @@ export default function Navbar() {
 
       <DisclosurePanel className="sm:hidden">
         <div className="space-y-1 px-2 pb-3 pt-2">
-          {alumni
+          {isAlumni
             ? privateNavigation.map((item) => {
                 const isActive = location.pathname === item.href;
                 return (

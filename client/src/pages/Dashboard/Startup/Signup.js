@@ -45,6 +45,12 @@ export default function StartupSignupPage() {
 
   return (
     <>
+      {/* Simple Header */}
+      <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+        <Link to="/" className="text-xl font-bold">EduBond</Link>
+        <Link to="/" className="text-gray-300 hover:text-white">← Back to Home</Link>
+      </div>
+      
       <div className="w-full flex h-[90%]">
         <div className="relative flex-1 hidden items-center justify-center h-full lg:flex">
           <div className="relative z-10 w-full max-w-md">
