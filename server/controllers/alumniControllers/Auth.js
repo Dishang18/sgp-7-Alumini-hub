@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Alumni = require("../../models/AlumniModel");
-const uploadToS3 = require("../../util/AWSUpload");
+const uploadToS3 = require("../../util/uploadToGridFS");
 
 const AlumniSignup = async (req, res) => {
   try {

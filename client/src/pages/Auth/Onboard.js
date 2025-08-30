@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { CometChat } from "@cometchat/chat-sdk-javascript";
 import { CometChatUIKit } from "@cometchat/chat-uikit-react";
+import { generateAvatarFromName } from "../../utils/avatarUtils";
 
 export default function Onboard() {
   const navigate = useNavigate();
@@ -134,6 +135,8 @@ export default function Onboard() {
         user.setName(name);
         if (response.data.data?.profilePicture) {
           user.setAvatar(response.data.data?.profilePicture);
+        } else {
+          user.setAvatar(generateAvatarFromName(response.data.data?.firstName, response.data.data?.lastName));
         }
         await CometChat.updateUser(
           user,
@@ -161,26 +164,42 @@ export default function Onboard() {
     }
   };
 
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setFormData({
-            ...formData,
-            location: {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            },
-          });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
+ const getCurrentLocation = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData((prev) => ({
+          ...prev,
+          location: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          },
+        }));
+      },
+      (error) => {
+        let message = "";
+        switch (error.code) {
+          case 1:
+            message = "Permission denied. Please enable location in browser settings.";
+            break;
+          case 2:
+            message = "Location unavailable. Try moving near a window or check Location Services.";
+            break;
+          case 3:
+            message = "Location request timed out.";
+            break;
+          default:
+            message = "Unknown error while fetching location.";
         }
-      );
-    } else {
-      console.error("Geolocation is not supported by this browser.");
-    }
-  };
+        toast.error(message);
+        console.error("Error getting location:", error);
+      }
+    );
+  } else {
+    toast.error("Geolocation is not supported by this browser.");
+  }
+};
+
 
   useEffect(() => {
     if (!alumni?.email) {

@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Startup = require("../../models/StartupModel");
-const uploadToS3 = require("../../util/AWSUpload");
+const uploadToS3 = require("../../util/uploadToGridFS");
 
 const StartupSignup = async (req, res) => {
   try {

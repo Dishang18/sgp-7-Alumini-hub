@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { getAvatarUrl } from "../../../utils/avatarUtils";
 
 const AlumniDashboard = () => {
   // Static alumni info
@@ -91,7 +92,7 @@ const AlumniDashboard = () => {
             <div className="md:flex md:items-center md:justify-between">
               <div className="flex items-center mb-6 md:mb-0">
                 <img
-                  src={alumni?.profilePicture || "/images/defppic.jpg"}
+                  src={getAvatarUrl(alumni?.profilePicture, alumni?.firstName, alumni?.lastName)}
                   alt="Profile"
                   className="w-16 h-16 rounded-full border-4 border-blue-400 shadow-lg"
                 />

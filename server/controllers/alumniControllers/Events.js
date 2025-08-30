@@ -1,6 +1,6 @@
 const Event = require("../../models/EventModel");
 const Alumni = require("../../models/AlumniModel");
-const uploadToS3 = require("../../util/AWSUpload");
+const uploadToS3 = require("../../util/uploadToGridFS");
 
 const getEvents = async (req, res) => {
   try {

@@ -31,7 +31,6 @@ import StartupSignupPage from "./pages/Dashboard/Startup/Signup";
 import StartupOnboard from "./pages/Dashboard/Startup/StartupOnboard";
 import ProtectedStartupRoute from "./utils/ProtectedStartupRoute";
 import Nearby from "./pages/Dashboard/Alumni/Nearby/Nearby";
-import Inbox from "./pages/Dashboard/Alumni/Messaging/inbox";
 import { CometChat } from "@cometchat/chat-sdk-javascript";
 import { CometChatHome } from "./pages/CometChat/CometChatHome/CometChatHome";
 import {
@@ -50,24 +49,27 @@ import CollegeEventPage from "./pages/Dashboard/College/CollegeEventPage";
 
 function App() {
   const { loading } = useSelector((state) => state.alert);
+
   let appSetting = new CometChat.AppSettingsBuilder()
     .subscribePresenceForAllUsers()
     .setRegion(process.env.REACT_APP_COMET_REGION)
     .autoEstablishSocketConnection(true)
     .build();
+
   const uiKitSettings = new UIKitSettingsBuilder()
     .setAppId(process.env.REACT_APP_COMET_APP_ID)
     .setRegion(process.env.REACT_APP_COMET_REGION)
     .setAuthKey(process.env.REACT_APP_COMET_AUTH_KEY)
     .subscribePresenceForAllUsers()
     .build();
+
   CometChatUIKit.init(uiKitSettings);
   CometChat.init(process.env.REACT_APP_COMET_APP_ID, appSetting).then(
     () => {
-      console.log("Initialization completed successfully");
+      console.log("CometChat initialization success ✅");
     },
     (error) => {
-      console.log("Initialization failed with error:", error);
+      console.log("CometChat initialization failed ❌:", error);
     }
   );
 
@@ -201,13 +203,13 @@ function App() {
             }
           />
 
+          {/* College & Startup routes */}
           <Route path="/college" element={<CollegeLogin />} />
           <Route path="/college/news" element={<CreateNews />} />
           <Route path="/college/settings" element={<CollegeSettings />} />
           <Route path="/college/events" element={<CollegeEvents />} />
           <Route path="/college/create-event" element={<CollegecreateEvent />} />
           <Route path="/college/event/:eventId" element={<CollegeEventPage />} />
-
 
           <Route path="/startup/login" element={<StartupLoginPage />} />
           <Route path="/startup/signup" element={<StartupSignupPage />} />

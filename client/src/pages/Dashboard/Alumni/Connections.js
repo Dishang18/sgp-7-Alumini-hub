@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
+import { getAvatarUrl } from "../../../utils/avatarUtils";
 
 const Connections = () => {
   const [search, setSearch] = useState("");
@@ -128,7 +129,7 @@ const Connections = () => {
               className="bg-gray-800 rounded-lg p-4 flex flex-col items-center"
             >
               <img
-                src={batchmate.profilePicture || "/images/defppic.jpg"}
+                src={getAvatarUrl(batchmate.profilePicture, batchmate.firstName, batchmate.lastName)}
                 alt={`${batchmate.firstName} ${batchmate.lastName}'s profile`}
                 className="w-24 h-24 rounded-full mb-4 object-cover"
               />
