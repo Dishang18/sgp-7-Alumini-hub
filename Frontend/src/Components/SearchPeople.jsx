@@ -21,8 +21,8 @@ const SearchPeople = () => {
     try {
       const params = new URLSearchParams();
       
-      // For students, allow year and branch-based search
-      if (currentUser?.role === 'student') {
+      // For students and alumni, allow year and branch-based search
+      if (currentUser?.role === 'student' || currentUser?.role === 'alumni') {
         if (selectedYear) params.append('year', selectedYear);
         if (selectedBranch) params.append('branch', selectedBranch);
       } else {
@@ -59,8 +59,8 @@ const SearchPeople = () => {
         <div>
           <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">Alumni Directory</h2>
           
-          {/* Debug info for students */}
-          {currentUser?.role === 'student' && (
+          {/* Debug info for students and alumni */}
+          {(currentUser?.role === 'student' || currentUser?.role === 'alumni') && (
             <div className="mb-4 p-3 bg-blue-100 border border-blue-400 rounded-md">
               <p className="text-sm text-blue-700">
                 Showing alumni from your department: <strong>{currentUser.department}</strong>
@@ -72,8 +72,8 @@ const SearchPeople = () => {
           <div className="bg-white p-6 rounded-lg shadow-md mb-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-700">Search Filters</h3>
             
-            {currentUser?.role === 'student' ? (
-              // Simplified search for students - graduation year and branch
+            {(currentUser?.role === 'student' || currentUser?.role === 'alumni') ? (
+              // Simplified search for students and alumni - graduation year and branch
               <div className="max-w-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>

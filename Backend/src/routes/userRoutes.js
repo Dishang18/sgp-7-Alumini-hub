@@ -209,6 +209,9 @@ router.get('/alumni', checkAuth, async (req, res) => {
     if (currentUser.role === 'student') {
       // Students can only see alumni from their department
       filter.department = { $regex: new RegExp(`^${currentUser.department}$`, 'i') };
+    } else if (currentUser.role === 'alumni') {
+      // Alumni can only see other alumni from their department
+      filter.department = { $regex: new RegExp(`^${currentUser.department}$`, 'i') };
     } else if (currentUser.role === 'professor') {
       // Professors can see alumni from their department
       filter.department = { $regex: new RegExp(`^${currentUser.department}$`, 'i') };

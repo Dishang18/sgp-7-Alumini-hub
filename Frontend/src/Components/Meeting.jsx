@@ -14,6 +14,8 @@ const Meeting = () => {
   const [meetings, setMeetings] = useState([]);
   const [editModal, setEditModal] = useState({ open: false, meeting: null });
   const [editForm, setEditForm] = useState({ title: '', description: '', meetingLink: '', date: '' });
+  const [rejectModal, setRejectModal] = useState({ open: false, meeting: null });
+  const [rejectionReason, setRejectionReason] = useState('');
   // Handle edit form changes
   const handleEditChange = (e) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
@@ -33,6 +35,38 @@ const Meeting = () => {
   // Close edit modal
   const closeEditModal = () => {
     setEditModal({ open: false, meeting: null });
+  };
+
+  // Open reject modal
+  const openRejectModal = (meeting) => {
+    setRejectModal({ open: true, meeting });
+    setRejectionReason('');
+  };
+
+  // Close reject modal
+  const closeRejectModal = () => {
+    setRejectModal({ open: false, meeting: null });
+    setRejectionReason('');
+  };
+
+  // Submit rejection with reason
+  const handleRejectSubmit = async (e) => {
+    e.preventDefault();
+    if (!rejectionReason.trim()) {
+      toast.error('Please provide a reason for rejection');
+      return;
+    }
+    setLoading(true);
+    try {
+      await rejectMeeting(rejectModal.meeting._id, rejectionReason.trim());
+      toast.success('Meeting rejected with reason!');
+      const res = await fetchMeetings();
+      setMeetings(res.data.meetings || res.data.data?.meetings || []);
+      closeRejectModal();
+    } catch {
+      toast.error('Failed to reject meeting');
+    }
+    setLoading(false);
   };
 
   // Submit edit
@@ -95,6 +129,37 @@ const Meeting = () => {
       {loggedIn ? (
         <>
           <h2 className="text-4xl font-extrabold mb-6 text-center text-indigo-700">Meetings</h2>
+          
+          {/* Info message for college admin */}
+          {user?.role === 'collegeadmin' && (
+            <div className="mb-6 p-4 bg-blue-100 border border-blue-400 rounded-md max-w-lg">
+              <p className="text-sm text-blue-700">
+                <strong>College Admin:</strong> You can only create meetings with alumni from your department: <strong>{user.department}</strong>
+              </p>
+              <p className="text-sm text-blue-600 mt-1">
+                Alumni are required to provide reasons when rejecting meetings, which will be displayed in rejected meeting cards.
+              </p>
+            </div>
+          )}
+          
+          {/* Info message for professor */}
+          {user?.role === 'professor' && (
+            <div className="mb-6 p-4 bg-green-100 border border-green-400 rounded-md max-w-lg">
+              <p className="text-sm text-green-700">
+                <strong>Professor:</strong> You can only create meetings with alumni from your department ({user.department}) and branch ({user.branch})
+              </p>
+            </div>
+          )}
+          
+          {/* Info message for students */}
+          {user?.role === 'student' && (
+            <div className="mb-6 p-4 bg-purple-100 border border-purple-400 rounded-md max-w-lg">
+              <p className="text-sm text-purple-700">
+                <strong>Student:</strong> You can see approved meetings from your department: <strong>{user.department}</strong>
+              </p>
+            </div>
+          )}
+          
           {canCreate && (
             <form onSubmit={handleCreate} className="mb-8 bg-white p-6 rounded-xl shadow-lg w-full max-w-lg animate-fade-in">
               <h3 className="text-xl font-semibold mb-4 flex items-center"><PencilSquareIcon className="h-6 w-6 text-indigo-400 mr-2" />Create Meeting Request</h3>
@@ -131,6 +196,14 @@ const Meeting = () => {
                   </div>
                   <div className="text-gray-700 mb-2">{m.description}</div>
                   <div className="text-gray-500 text-xs mb-1">Status: <span className={m.status === 'approved' ? 'text-green-600' : m.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}>{m.status}</span></div>
+                  {/* Show rejection reason if meeting is rejected */}
+                  {m.status === 'rejected' && m.rejectionReason && (
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                      <p className="text-sm text-red-700">
+                        <strong>Rejection Reason:</strong> {m.rejectionReason}
+                      </p>
+                    </div>
+                  )}
                   {/* Alumni can approve/reject their own meeting requests */}
                   {user && user.role === 'alumni' && m.alumni && (m.alumni._id === user._id || m.alumni === user._id) && m.status === 'pending' && (
                     <div className="flex gap-2 mt-2">
@@ -146,18 +219,9 @@ const Meeting = () => {
                         }
                         setLoading(false);
                       }}>Approve</button>
-                      <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600" onClick={async () => {
-                        setLoading(true);
-                        try {
-                          await rejectMeeting(m._id);
-                          toast.success('Meeting rejected!');
-                          const res = await fetchMeetings();
-                          setMeetings(res.data.meetings || res.data.data?.meetings || []);
-                        } catch {
-                          toast.error('Failed to reject meeting');
-                        }
-                        setLoading(false);
-                      }}>Reject</button>
+                      <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600" onClick={() => openRejectModal(m)}>
+                        Reject
+                      </button>
                     </div>
                   )}
                   {/* Creator can edit/delete their own meeting */}
@@ -201,6 +265,37 @@ const Meeting = () => {
             <div className="flex justify-end gap-2 mt-4">
               <button type="button" onClick={closeEditModal} className="px-3 py-1 bg-gray-300 rounded">Cancel</button>
               <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Reject Meeting Modal */}
+      {rejectModal.open && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <form onSubmit={handleRejectSubmit} className="bg-white p-6 rounded shadow-lg w-96">
+            <h3 className="text-lg font-bold mb-4 text-red-600">Reject Meeting</h3>
+            <p className="text-gray-600 mb-4">
+              Please provide a reason for rejecting this meeting request. This will help the college admin understand your decision.
+            </p>
+            <label className="block mb-4">
+              <span className="text-sm font-medium text-gray-700 mb-2 block">Rejection Reason *</span>
+              <textarea 
+                value={rejectionReason} 
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
+                rows="4"
+                placeholder="e.g., Time conflict, Not available on that date, Different expertise needed..."
+                required
+              />
+            </label>
+            <div className="flex justify-end gap-2 mt-4">
+              <button type="button" onClick={closeRejectModal} className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                Cancel
+              </button>
+              <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700" disabled={loading}>
+                {loading ? 'Rejecting...' : 'Reject Meeting'}
+              </button>
             </div>
           </form>
         </div>

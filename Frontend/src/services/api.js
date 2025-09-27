@@ -24,8 +24,8 @@ export const approveMeeting = async (id, token) => {
   });
 };
 
-export const rejectMeeting = async (id, token) => {
-  return axios.patch(`${API_BASE}/meeting/${id}/reject`, {}, {
+export const rejectMeeting = async (id, rejectionReason, token) => {
+  return axios.patch(`${API_BASE}/meeting/${id}/reject`, { rejectionReason }, {
     withCredentials: true,
     headers: { Authorization: `Bearer ${token}` },
   });

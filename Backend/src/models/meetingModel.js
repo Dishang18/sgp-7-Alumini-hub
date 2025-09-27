@@ -8,6 +8,7 @@ const MeetingSchema = new mongoose.Schema({
   alumni: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // target alumni
   date: { type: Date, required: true },
   status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+  rejectionReason: { type: String }, // Reason provided by alumni when rejecting
   createdAt: { type: Date, default: Date.now },
 });
 
