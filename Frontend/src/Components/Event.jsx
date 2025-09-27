@@ -11,6 +11,7 @@ function Event() {
   const loggedIn = getLoggedIn();
   const user = getUserData();
   const [events, setEvents] = useState([]);
+  const [eventsMeta, setEventsMeta] = useState(null);
   const [form, setForm] = useState({ 
     title: '', 
     date: '', 
@@ -41,6 +42,7 @@ function Event() {
     try {
       const res = await fetchEvents();
       setEvents(res.data.data.events);
+      setEventsMeta(res.data.meta);
       
       // Show meta message if available
       if (res.data.meta && res.data.meta.message) {
@@ -194,6 +196,40 @@ function Event() {
               </button>
             )}
           </div>
+          
+          {/* Main Admin Summary - College Admin Events Visibility */}
+          {isAdmin && eventsMeta && (
+            <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 w-full max-w-2xl">
+              <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center">
+                📊 Admin Overview - All Department Events
+              </h3>
+              <div className="text-sm text-green-700 space-y-1">
+                <p><strong>Total Events:</strong> {eventsMeta.totalEvents}</p>
+                {eventsMeta.collegeAdminEventsCount > 0 && (
+                  <p><strong>Events by College Admins:</strong> 
+                    <span className="ml-1 bg-green-200 px-2 py-0.5 rounded text-green-800 font-medium">
+                      {eventsMeta.collegeAdminEventsCount}
+                    </span>
+                  </p>
+                )}
+                {eventsMeta.departmentBreakdown && Object.keys(eventsMeta.departmentBreakdown).length > 0 && (
+                  <div>
+                    <p><strong>By Department:</strong></p>
+                    <div className="ml-4 mt-1">
+                      {Object.entries(eventsMeta.departmentBreakdown).map(([dept, count]) => (
+                        <span key={dept} className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs mr-2 mb-1">
+                          {dept}: {count}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-green-600 mt-2 italic">
+                💡 Events with green borders are from college admins of different departments
+              </p>
+            </div>
+          )}
           {canCreate && (
             <form onSubmit={handleSubmit} className="mb-8 bg-white p-6 rounded-xl shadow-lg w-full max-w-lg animate-fade-in border-l-4 border-indigo-400">
               <h2 className="text-xl font-semibold mb-4 flex items-center text-indigo-700">
@@ -286,11 +322,24 @@ function Event() {
                 </div>
               </div>
             ) : (
-              events.map(ev => (
-                <div key={ev._id} className="bg-white rounded-xl shadow-md p-5 flex flex-col animate-fade-in border-l-4 border-indigo-400">
-                  <div className="flex items-center mb-2">
-                    <CalendarDaysIcon className="h-5 w-5 text-indigo-400 mr-2" />
-                    <span className="font-bold text-lg text-indigo-700">{ev.title}</span>
+              events.map(ev => {
+                // Determine if this event is from a different department (for main admin view)
+                const isFromDifferentDept = isAdmin && user.department !== ev.department && ev.department;
+                const borderColor = isFromDifferentDept ? 'border-green-400' : 'border-indigo-400';
+                
+                return (
+                <div key={ev._id} className={`bg-white rounded-xl shadow-md p-5 flex flex-col animate-fade-in border-l-4 ${borderColor}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center">
+                      <CalendarDaysIcon className="h-5 w-5 text-indigo-400 mr-2" />
+                      <span className="font-bold text-lg text-indigo-700">{ev.title}</span>
+                    </div>
+                    {/* Main Admin indicator for college admin events */}
+                    {isAdmin && ev.organizedBy && ev.organizedBy.role === 'collegeadmin' && (
+                      <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                        College Admin Event
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center mb-1">
                     <MapPinIcon className="h-4 w-4 text-indigo-300 mr-1" />
@@ -312,12 +361,14 @@ function Event() {
                   )}
                   <div className="text-gray-700 mb-2">{ev.description}</div>
                   
-                  {/* Department and Target Audience Info */}
+                  {/* Enhanced Department and Organizer Info */}
                   <div className="mt-2 space-y-1">
+                    {/* Department info with special highlighting for main admin */}
                     {ev.department && (
-                      <div className="text-xs text-gray-500">
+                      <div className={`text-xs ${isFromDifferentDept ? 'text-green-600 font-semibold' : 'text-gray-500'}`}>
                         <span className="font-medium">Department:</span> {ev.department}
                         {ev.branch && <span> - {ev.branch}</span>}
+                        {isFromDifferentDept && <span className="ml-2 text-green-500">• External Dept</span>}
                       </div>
                     )}
                     {ev.targetAudience && ev.targetAudience.length > 0 && (
@@ -326,8 +377,14 @@ function Event() {
                       </div>
                     )}
                     {ev.organizedBy && (
-                      <div className="text-xs text-gray-500">
-                        <span className="font-medium">Organized by:</span> {ev.organizedBy.name} ({ev.organizedBy.role})
+                      <div className={`text-xs ${isAdmin ? 'text-gray-600' : 'text-gray-500'}`}>
+                        <span className="font-medium">Organized by:</span> {ev.organizedBy.name} 
+                        <span className={`ml-1 ${ev.organizedBy.role === 'collegeadmin' && isAdmin ? 'text-green-600 font-medium' : ''}`}>
+                          ({ev.organizedBy.role})
+                        </span>
+                        {isAdmin && ev.organizedBy.department && ev.organizedBy.department !== 'Unknown' && (
+                          <span className="text-gray-500"> - {ev.organizedBy.department} Dept</span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -345,7 +402,8 @@ function Event() {
                     </div>
                   )}
                 </div>
-              ))
+              );
+              })
             )}
           </div>
         </>

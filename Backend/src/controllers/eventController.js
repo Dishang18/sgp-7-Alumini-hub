@@ -209,20 +209,46 @@ const getAllEventsController = async (req, res) => {
         }
       }));
 
+    // Enhanced meta information for admin
+    let metaInfo = {
+      totalEvents: activeEvents.length,
+      userDepartment: userDepartment,
+      userRole: userRole,
+      filter: userRole === "admin" ? "All departments" : `${userDepartment} department only`
+    };
+
+    if (userRole === "admin") {
+      // Provide department breakdown for main admin
+      const departmentStats = {};
+      const collegeAdminEvents = activeEvents.filter(event => 
+        event.organizedBy && event.organizedBy.role === 'collegeadmin'
+      );
+      
+      activeEvents.forEach(event => {
+        const dept = event.department || 'No Department';
+        departmentStats[dept] = (departmentStats[dept] || 0) + 1;
+      });
+
+      metaInfo = {
+        ...metaInfo,
+        departmentBreakdown: departmentStats,
+        collegeAdminEventsCount: collegeAdminEvents.length,
+        message: activeEvents.length === 0 
+          ? "No active events found across all departments. Expired events are automatically removed." 
+          : `${activeEvents.length} active event${activeEvents.length > 1 ? 's' : ''} found across all departments${collegeAdminEvents.length > 0 ? ` (${collegeAdminEvents.length} from college admins)` : ''}.`
+      };
+    } else {
+      metaInfo.message = activeEvents.length === 0 
+        ? `No active events found for ${userDepartment} department. Expired events are automatically removed.` 
+        : `${activeEvents.length} active event${activeEvents.length > 1 ? 's' : ''} found for ${userDepartment} department.`;
+    }
+
     res.status(200).json({
       status: "success",
       data: {
         events: activeEvents,
       },
-      meta: {
-        totalEvents: activeEvents.length,
-        userDepartment: userDepartment,
-        userRole: userRole,
-        filter: userRole === "admin" ? "All departments" : `${userDepartment} department only`,
-        message: activeEvents.length === 0 
-          ? `No active events found for ${userDepartment} department. Expired events are automatically removed.` 
-          : `${activeEvents.length} active event${activeEvents.length > 1 ? 's' : ''} found for ${userDepartment} department.`
-      }
+      meta: metaInfo
     });
   } catch (error) {
     console.error("Error fetching events:", error);
