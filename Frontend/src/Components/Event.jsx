@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from 'react';
 import { getLoggedIn, getUserData } from '../services/authService';
 import NotLoggedIn from './helper/NotLoggedIn';
@@ -43,11 +41,6 @@ function Event() {
       const res = await fetchEvents();
       setEvents(res.data.data.events);
       setEventsMeta(res.data.meta);
-      
-      // Show meta message if available
-      if (res.data.meta && res.data.meta.message) {
-        console.log('Events loaded:', res.data.meta.message);
-      }
     } catch (error) {
       toast.error('Failed to fetch events');
     }
@@ -82,7 +75,6 @@ function Event() {
       await createEvent(form);
       toast.success('Event created!');
       setForm({ title: '', date: '', location: '', description: '', targetAudience: ['student'], branch: '' });
-      // Refresh events
       await loadEvents();
     } catch (err) {
       toast.error('Failed to create event');
@@ -97,7 +89,6 @@ function Event() {
     if (!window.confirm('Are you sure you want to manually clean up expired events? This will remove all events that have passed their date.')) {
       return;
     }
-    
     setLoading(true);
     try {
       const response = await fetch('/api/events/cleanup', {
@@ -108,12 +99,10 @@ function Event() {
         },
         credentials: 'include'
       });
-      
       const result = await response.json();
-      
       if (response.ok) {
         toast.success(result.message);
-        await loadEvents(); // Refresh events list
+        await loadEvents();
       } else {
         toast.error(result.message || 'Failed to cleanup events');
       }
@@ -123,10 +112,8 @@ function Event() {
     setLoading(false);
   };
 
-  // Only allow edit/delete if event was created by the logged-in user (professor or collegeadmin)
   const canEditOrDelete = (ev) => {
     if (!user || !(user.role === 'collegeadmin' || user.role === 'professor')) return false;
-    // createdBy may be an object (populated) or string (id)
     const createdById = ev.createdBy && (ev.createdBy._id || ev.createdBy);
     return createdById === user._id;
   };
@@ -156,7 +143,6 @@ function Event() {
       toast.success('Event updated!');
       setShowEditModal(false);
       setEditId(null);
-      // Refresh events
       await loadEvents();
     } catch (err) {
       toast.error('Failed to update event');
@@ -170,7 +156,6 @@ function Event() {
     try {
       await deleteEvent(id);
       toast.success('Event deleted!');
-      // Refresh events
       await loadEvents();
     } catch (err) {
       toast.error('Failed to delete event');
@@ -179,25 +164,28 @@ function Event() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex flex-col items-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 px-4 py-8 flex flex-col items-center">
       <ToastContainer />
       {loggedIn ? (
         <>
           <div className="flex flex-col sm:flex-row items-center justify-between mb-6 w-full max-w-2xl">
-            <h1 className="text-4xl font-extrabold text-center text-indigo-700 mb-4 sm:mb-0">Events</h1>
+            <h1 className="text-4xl font-extrabold text-center text-blue-700 mb-4 sm:mb-0 w-full">
+              Events
+            </h1>
             {isAdmin && (
-              <button
-                onClick={handleManualCleanup}
-                disabled={loading}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50"
-              >
-                <TrashIcon className="h-4 w-4" />
-                {loading ? 'Cleaning...' : 'Cleanup Expired'}
-              </button>
+              <div className="sm:ml-4 flex justify-center sm:justify-end w-full sm:w-auto items-center">
+                <button
+                  onClick={handleManualCleanup}
+                  disabled={loading}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  {loading ? 'Cleaning...' : 'Cleanup Expired'}
+                </button>
+              </div>
             )}
           </div>
-          
-          {/* Main Admin Summary - College Admin Events Visibility */}
+          {/* Admin Summary */}
           {isAdmin && eventsMeta && (
             <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 w-full max-w-2xl">
               <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center">
@@ -231,32 +219,25 @@ function Event() {
             </div>
           )}
           {canCreate && (
-            <form onSubmit={handleSubmit} className="mb-8 bg-white p-6 rounded-xl shadow-lg w-full max-w-lg animate-fade-in border-l-4 border-indigo-400">
-              <h2 className="text-xl font-semibold mb-4 flex items-center text-indigo-700">
-                <PencilSquareIcon className="h-6 w-6 text-indigo-400 mr-2" />
+            <form onSubmit={handleSubmit} className="mb-8 bg-white p-6 rounded-xl shadow-lg w-full max-w-lg border-l-4 border-blue-400">
+              <h2 className="text-xl font-semibold mb-4 flex items-center text-blue-700">
+                <PencilSquareIcon className="h-6 w-6 text-blue-400 mr-2" />
                 Create Event
               </h2>
-              
-              {/* Department Info */}
               {user && user.department && (
-                <div className="mb-4 p-3 bg-indigo-50 rounded-lg">
-                  <p className="text-sm text-indigo-700">
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-700">
                     <strong>Creating for:</strong> {user.department} Department
                     {user.branch && <span> - {user.branch} Branch</span>}
                   </p>
-                  <p className="text-xs text-indigo-600 mt-1">
+                  <p className="text-xs text-blue-600 mt-1">
                     Only users from your department will see this event
                   </p>
                 </div>
               )}
-
-              <input name="title" value={form.title} onChange={handleChange} placeholder="Event Title" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
-              
-              <input name="date" value={form.date} onChange={handleChange} type="date" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
-              
-              <input name="location" value={form.location} onChange={handleChange} placeholder="Event Location" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
-              
-              {/* Target Audience Selection */}
+              <input name="title" value={form.title} onChange={handleChange} placeholder="Event Title" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
+              <input name="date" value={form.date} onChange={handleChange} type="date" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
+              <input name="location" value={form.location} onChange={handleChange} placeholder="Event Location" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
               <div className="mb-3">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience:</label>
                 <div className="flex flex-wrap gap-3">
@@ -295,24 +276,20 @@ function Event() {
                   </label>
                 </div>
               </div>
-
-              {/* Branch Selection (Optional) */}
               <input 
                 name="branch" 
                 value={form.branch} 
                 onChange={handleChange} 
                 placeholder={`Specific Branch (optional, default: ${user && user.branch ? user.branch : 'All branches'})`}
-                className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" 
+                className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" 
               />
-              
-              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Event Description" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" />
-              
-              <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition-colors duration-200 w-full" disabled={loading}>
+              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Event Description" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" />
+              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition-colors duration-200 w-full" disabled={loading}>
                 {loading ? 'Creating...' : 'Create Event'}
               </button>
             </form>
           )}
-          <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
+          <section className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
             {events.length === 0 ? (
               <div className="col-span-2 text-center py-8">
                 <CalendarDaysIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -323,89 +300,83 @@ function Event() {
               </div>
             ) : (
               events.map(ev => {
-                // Determine if this event is from a different department (for main admin view)
                 const isFromDifferentDept = isAdmin && user.department !== ev.department && ev.department;
-                const borderColor = isFromDifferentDept ? 'border-green-400' : 'border-indigo-400';
-                
+                const borderColor = isFromDifferentDept ? 'border-green-400' : 'border-blue-400';
                 return (
-                <div key={ev._id} className={`bg-white rounded-xl shadow-md p-5 flex flex-col animate-fade-in border-l-4 ${borderColor}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
-                      <CalendarDaysIcon className="h-5 w-5 text-indigo-400 mr-2" />
-                      <span className="font-bold text-lg text-indigo-700">{ev.title}</span>
-                    </div>
-                    {/* Main Admin indicator for college admin events */}
-                    {isAdmin && ev.organizedBy && ev.organizedBy.role === 'collegeadmin' && (
-                      <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                        College Admin Event
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center mb-1">
-                    <MapPinIcon className="h-4 w-4 text-indigo-300 mr-1" />
-                    <span className="text-gray-600">{ev.location}</span>
-                  </div>
-                  <div className="text-gray-500 text-sm mb-2">
-                    {new Date(ev.date).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </div>
-                  {ev.timeUntilExpiration && (
-                    <div className="flex items-center mb-2">
-                      <ClockIcon className="h-4 w-4 text-orange-400 mr-1" />
-                      <span className="text-orange-600 text-sm font-medium">{ev.timeUntilExpiration}</span>
-                    </div>
-                  )}
-                  <div className="text-gray-700 mb-2">{ev.description}</div>
-                  
-                  {/* Enhanced Department and Organizer Info */}
-                  <div className="mt-2 space-y-1">
-                    {/* Department info with special highlighting for main admin */}
-                    {ev.department && (
-                      <div className={`text-xs ${isFromDifferentDept ? 'text-green-600 font-semibold' : 'text-gray-500'}`}>
-                        <span className="font-medium">Department:</span> {ev.department}
-                        {ev.branch && <span> - {ev.branch}</span>}
-                        {isFromDifferentDept && <span className="ml-2 text-green-500">• External Dept</span>}
+                  <div key={ev._id} className={`bg-white rounded-xl shadow-md p-5 flex flex-col border-l-4 ${borderColor}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <CalendarDaysIcon className="h-5 w-5 text-blue-400 mr-2" />
+                        <span className="font-bold text-lg text-blue-700">{ev.title}</span>
                       </div>
-                    )}
-                    {ev.targetAudience && ev.targetAudience.length > 0 && (
-                      <div className="text-xs text-gray-500">
-                        <span className="font-medium">For:</span> {ev.targetAudience.join(', ')}
-                      </div>
-                    )}
-                    {ev.organizedBy && (
-                      <div className={`text-xs ${isAdmin ? 'text-gray-600' : 'text-gray-500'}`}>
-                        <span className="font-medium">Organized by:</span> {ev.organizedBy.name} 
-                        <span className={`ml-1 ${ev.organizedBy.role === 'collegeadmin' && isAdmin ? 'text-green-600 font-medium' : ''}`}>
-                          ({ev.organizedBy.role})
+                      {isAdmin && ev.organizedBy && ev.organizedBy.role === 'collegeadmin' && (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                          College Admin Event
                         </span>
-                        {isAdmin && ev.organizedBy.department && ev.organizedBy.department !== 'Unknown' && (
-                          <span className="text-gray-500"> - {ev.organizedBy.department} Dept</span>
-                        )}
+                      )}
+                    </div>
+                    <div className="flex items-center mb-1">
+                      <MapPinIcon className="h-4 w-4 text-blue-300 mr-1" />
+                      <span className="text-gray-600">{ev.location}</span>
+                    </div>
+                    <div className="text-gray-500 text-sm mb-2">
+                      {new Date(ev.date).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </div>
+                    {ev.timeUntilExpiration && (
+                      <div className="flex items-center mb-2">
+                        <ClockIcon className="h-4 w-4 text-orange-400 mr-1" />
+                        <span className="text-orange-600 text-sm font-medium">{ev.timeUntilExpiration}</span>
+                      </div>
+                    )}
+                    <div className="text-gray-700 mb-2">{ev.description}</div>
+                    <div className="mt-2 space-y-1">
+                      {ev.department && (
+                        <div className={`text-xs ${isFromDifferentDept ? 'text-green-600 font-semibold' : 'text-gray-500'}`}>
+                          <span className="font-medium">Department:</span> {ev.department}
+                          {ev.branch && <span> - {ev.branch}</span>}
+                          {isFromDifferentDept && <span className="ml-2 text-green-500">• External Dept</span>}
+                        </div>
+                      )}
+                      {ev.targetAudience && ev.targetAudience.length > 0 && (
+                        <div className="text-xs text-gray-500">
+                          <span className="font-medium">For:</span> {ev.targetAudience.join(', ')}
+                        </div>
+                      )}
+                      {ev.organizedBy && (
+                        <div className={`text-xs ${isAdmin ? 'text-gray-600' : 'text-gray-500'}`}>
+                          <span className="font-medium">Organized by:</span> {ev.organizedBy.name} 
+                          <span className={`ml-1 ${ev.organizedBy.role === 'collegeadmin' && isAdmin ? 'text-green-600 font-medium' : ''}`}>
+                            ({ev.organizedBy.role})
+                          </span>
+                          {isAdmin && ev.organizedBy.department && ev.organizedBy.department !== 'Unknown' && (
+                            <span className="text-gray-500"> - {ev.organizedBy.department} Dept</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {canEditOrDelete(ev) && (
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          className="px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500"
+                          onClick={() => handleEditClick(ev)}
+                        >Edit</button>
+                        <button
+                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                          onClick={() => handleDelete(ev._id)}
+                          disabled={loading}
+                        >Delete</button>
                       </div>
                     )}
                   </div>
-                  {canEditOrDelete(ev) && (
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        className="px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500"
-                        onClick={() => handleEditClick(ev)}
-                      >Edit</button>
-                      <button
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                        onClick={() => handleDelete(ev._id)}
-                        disabled={loading}
-                      >Delete</button>
-                    </div>
-                  )}
-                </div>
-              );
+                );
               })
             )}
-          </div>
+          </section>
         </>
       ) : (
         <NotLoggedIn text="Event" />
@@ -414,13 +385,11 @@ function Event() {
       {showEditModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg">
-            <h2 className="text-xl font-semibold mb-4 flex items-center"><PencilSquareIcon className="h-6 w-6 text-indigo-400 mr-2" />Edit Event</h2>
+            <h2 className="text-xl font-semibold mb-4 flex items-center"><PencilSquareIcon className="h-6 w-6 text-blue-400 mr-2" />Edit Event</h2>
             <form onSubmit={handleEditSubmit}>
-              <input name="title" value={editForm.title} onChange={handleEditChange} placeholder="Title" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
-              <input name="date" value={editForm.date} onChange={handleEditChange} type="date" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
-              <input name="location" value={editForm.location} onChange={handleEditChange} placeholder="Location" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
-              
-              {/* Target Audience Selection for Edit */}
+              <input name="title" value={editForm.title} onChange={handleEditChange} placeholder="Title" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
+              <input name="date" value={editForm.date} onChange={handleEditChange} type="date" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
+              <input name="location" value={editForm.location} onChange={handleEditChange} placeholder="Location" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
               <div className="mb-3">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience:</label>
                 <div className="flex flex-wrap gap-3">
@@ -459,26 +428,23 @@ function Event() {
                   </label>
                 </div>
               </div>
-
-              {/* Branch Selection for Edit */}
               <input 
                 name="branch" 
                 value={editForm.branch} 
                 onChange={handleEditChange} 
                 placeholder="Specific Branch (optional)"
-                className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" 
+                className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" 
               />
-              
-              <textarea name="description" value={editForm.description} onChange={handleEditChange} placeholder="Description" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" />
+              <textarea name="description" value={editForm.description} onChange={handleEditChange} placeholder="Description" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" />
               <div className="flex gap-2">
-                <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition-colors duration-200" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition-colors duration-200" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
                 <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded shadow hover:bg-gray-500 transition-colors duration-200" onClick={() => setShowEditModal(false)}>Cancel</button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }
 

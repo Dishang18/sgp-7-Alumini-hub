@@ -3,7 +3,6 @@ import { getLoggedIn, getUserData } from "../services/authService";
 import NotLoggedIn from "./helper/NotLoggedIn";
 import { fetchJobs, createJob, applyJob, updateJob, deleteJob } from "../services/jobService";
 
-
 function Jobs() {
   const loggedIn = getLoggedIn();
   const user = getUserData();
@@ -49,8 +48,6 @@ function Jobs() {
     setShowEditModal(true);
   };
 
-
-
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -81,9 +78,11 @@ function Jobs() {
 
   useEffect(() => {
     if (loggedIn) {
+      setLoading(true);
       fetchJobs(token)
         .then(res => setJobs(res.data.data.jobs))
-        .catch(() => setError('Failed to fetch jobs'));
+        .catch(() => setError('Failed to fetch jobs'))
+        .finally(() => setLoading(false));
     }
   }, [loggedIn]);
 
@@ -156,37 +155,37 @@ function Jobs() {
   if (!loggedIn) return <NotLoggedIn text="Jobs" />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex flex-col items-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 flex flex-col items-center p-4">
       <div className="text-center mb-6">
-        <h1 className="text-4xl font-bold text-indigo-700">Jobs</h1>
+        <h1 className="text-4xl font-bold text-blue-700">Jobs</h1>
         {user && user.department && (
           <p className="text-gray-600 mt-2">
-            Showing jobs for <span className="font-semibold text-indigo-600">{user.department}</span> department
+            Showing jobs for <span className="font-semibold text-blue-600">{user.department}</span> department
             {user.role === 'admin' && <span className="text-sm text-gray-500"> (Admin: All departments)</span>}
           </p>
         )}
       </div>
       
       {canPost && (
-        <form onSubmit={handleSubmit} className="mb-8 bg-white p-6 rounded-xl shadow-lg w-full max-w-lg border-l-4 border-indigo-400">
-          <h2 className="text-xl font-semibold mb-4 text-indigo-700">Post a Job</h2>
+        <form onSubmit={handleSubmit} className="mb-8 bg-white p-6 rounded-xl shadow-lg w-full max-w-lg border-l-4 border-blue-400">
+          <h2 className="text-xl font-semibold mb-4 text-blue-700">Post a Job</h2>
           
           {/* Department Info */}
-          <div className="mb-4 p-3 bg-indigo-50 rounded-lg">
-            <p className="text-sm text-indigo-700">
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-700">
               <strong>Posting for:</strong> {user.department} Department
               {user.branch && <span> - {user.branch} Branch</span>}
             </p>
-            <p className="text-xs text-indigo-600 mt-1">
+            <p className="text-xs text-blue-600 mt-1">
               Only students from your department will see this job
             </p>
           </div>
 
-          <input name="title" value={form.title} onChange={handleChange} placeholder="Job Title" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
+          <input name="title" value={form.title} onChange={handleChange} placeholder="Job Title" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
           
-          <input name="vacancy" value={form.vacancy} onChange={handleChange} type="number" min="1" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required placeholder="No. of Vacancies" />
+          <input name="vacancy" value={form.vacancy} onChange={handleChange} type="number" min="1" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required placeholder="No. of Vacancies" />
           
-          <input name="link" value={form.link} onChange={handleChange} placeholder="External Job Link (LinkedIn, Naukri, etc.)" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" />
+          <input name="link" value={form.link} onChange={handleChange} placeholder="External Job Link (LinkedIn, Naukri, etc.)" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" />
           
           {/* Target Audience Selection */}
           <div className="mb-3">
@@ -223,24 +222,24 @@ function Jobs() {
             value={form.branch} 
             onChange={handleChange} 
             placeholder={`Specific Branch (optional, default: ${user.branch || 'All branches'})`}
-            className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" 
+            className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" 
           />
           
-          <textarea name="description" value={form.description} onChange={handleChange} placeholder="Job Description" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
+          <textarea name="description" value={form.description} onChange={handleChange} placeholder="Job Description" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
           
-          <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition-colors duration-200 w-full" disabled={loading}>
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition-colors duration-200 w-full" disabled={loading}>
             {loading ? 'Posting...' : 'Post Job'}
           </button>
         </form>
       )}
       {error && <div className="text-red-600 mb-2">{error}</div>}
-      <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
         {jobs.length === 0 ? (
           <div className="col-span-2 text-center text-gray-500">No jobs found.</div>
         ) : (
           jobs.map(job => (
-            <div key={job._id} className="bg-white rounded-xl shadow-md p-5 flex flex-col">
-              <div className="font-bold text-lg text-indigo-700 mb-1">{job.title}</div>
+            <div key={job._id} className="bg-white rounded-xl shadow-md p-6 flex flex-col border border-gray-100">
+              <div className="font-bold text-lg text-blue-700 mb-1">{job.title}</div>
               <div className="text-gray-600 mb-1">Vacancy: {job.vacancy}</div>
               {job.link && (
                 <div className="mb-1">
@@ -260,24 +259,24 @@ function Jobs() {
                   </>
                 )}
               </div>
-      {/* Edit Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg">
-            <h2 className="text-xl font-semibold mb-4">Edit Job</h2>
-            <form onSubmit={handleEditSubmit}>
-              <input name="title" value={editForm.title} onChange={handleEditChange} placeholder="Title" className="block w-full mb-3 p-2 border rounded" required />
-              <input name="vacancy" value={editForm.vacancy} onChange={handleEditChange} type="number" min="1" className="block w-full mb-3 p-2 border rounded" required placeholder="No. of Vacancies" />
-              <input name="link" value={editForm.link} onChange={handleEditChange} placeholder="External Job Link (LinkedIn, Naukri, etc.)" className="block w-full mb-3 p-2 border rounded" />
-              <textarea name="description" value={editForm.description} onChange={handleEditChange} placeholder="Description" className="block w-full mb-3 p-2 border rounded" required />
-              <div className="flex gap-2">
-                <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition-colors duration-200" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
-                <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded shadow hover:bg-gray-500 transition-colors duration-200" onClick={() => setShowEditModal(false)}>Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              {/* Edit Modal */}
+              {showEditModal && editId === job._id && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+                  <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg">
+                    <h2 className="text-xl font-semibold mb-4">Edit Job</h2>
+                    <form onSubmit={handleEditSubmit}>
+                      <input name="title" value={editForm.title} onChange={handleEditChange} placeholder="Title" className="block w-full mb-3 p-2 border rounded" required />
+                      <input name="vacancy" value={editForm.vacancy} onChange={handleEditChange} type="number" min="1" className="block w-full mb-3 p-2 border rounded" required placeholder="No. of Vacancies" />
+                      <input name="link" value={editForm.link} onChange={handleEditChange} placeholder="External Job Link (LinkedIn, Naukri, etc.)" className="block w-full mb-3 p-2 border rounded" />
+                      <textarea name="description" value={editForm.description} onChange={handleEditChange} placeholder="Description" className="block w-full mb-3 p-2 border rounded" required />
+                      <div className="flex gap-2">
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition-colors duration-200" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
+                        <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded shadow hover:bg-gray-500 transition-colors duration-200" onClick={() => setShowEditModal(false)}>Cancel</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}

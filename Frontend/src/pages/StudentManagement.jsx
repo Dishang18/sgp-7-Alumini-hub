@@ -1,73 +1,242 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
+import { Navigate } from 'react-router-dom';
 
-// Role-based access for student management
-function canApproveStudent(currentUser, student) {
-  if (!currentUser || !student) return false;
-  if (currentUser.role === 'admin') return true;
+// Helper functions for role-based action visibility
+function canEditOrDelete(currentUser, user) {
+  if (!currentUser || !user) return false;
+  if (currentUser._id === user._id) return false; // Prevent self-edit/delete
+  if (currentUser.role === 'admin') {
+    return ['collegeadmin', 'professor', 'alumni', 'student'].includes(user.role);
+  }
   if (currentUser.role === 'collegeadmin') {
-    return student.department && student.department === currentUser.department;
+    const canManageRole = ['professor', 'alumni', 'student'].includes(user.role);
+    const sameDepartment = user.department &&
+      currentUser.department &&
+      user.department.toLowerCase() === currentUser.department.toLowerCase();
+    return canManageRole && sameDepartment;
   }
   if (currentUser.role === 'professor') {
     return (
-      student.department &&
-      student.branch &&
-      student.department === currentUser.department &&
-      student.branch === currentUser.branch
+      ['alumni', 'student'].includes(user.role) &&
+      user.department &&
+      user.branch &&
+      user.department === currentUser.department &&
+      user.branch === currentUser.branch
     );
   }
   return false;
 }
 
-function canDeleteStudent(currentUser, student) {
-  // Same logic as approve
-  return canApproveStudent(currentUser, student);
+function canApprove(currentUser, user) {
+  return canEditOrDelete(currentUser, user);
 }
 
-export default function StudentManagement() {
-  const [students, setStudents] = useState([]);
+export default function UserManagement() {
+  const loggedIn = useSelector((state) => state.loggedIn);
+  const currentUser = useSelector((state) => state.currentUser);
+  const [users, setUsers] = useState([]);
+  const [unapprovedUsers, setUnapprovedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [editStudent, setEditStudent] = useState(null);
+  const [editUser, setEditUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const currentUser = useSelector((state) => state.currentUser);
-  
-  // Pagination state
+  const [activeTab, setActiveTab] = useState('approved');
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+  const [availableDepartments, setAvailableDepartments] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterByApproval, setFilterByApproval] = useState('all'); // 'all', 'approved', 'pending'
+  const [usersPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [collegeAdminForm, setCollegeAdminForm] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    collegeName: '',
+    department: ''
+  });
 
-  const openEditModal = (student) => {
-    setEditStudent({ ...student });
+  const handleCollegeAdminInput = (e) => {
+    const { name, value } = e.target;
+    setCollegeAdminForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCollegeAdminRegister = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      await axios.post('http://localhost:5000/auth/register', {
+        ...collegeAdminForm,
+        role: 'collegeadmin',
+      }, { withCredentials: true });
+      setCollegeAdminForm({ email: '', password: '', firstName: '', lastName: '', collegeName: '', department: '' });
+      fetchUsers();
+      alert('College Admin registered successfully!');
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    }
+    setLoading(false);
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/users/all', { withCredentials: true });
+      const allUsers = res.data.data.users;
+      const departments = [...new Set(allUsers
+        .filter(user => user.department && user.department.trim())
+        .map(user => user.department.trim()))];
+      setAvailableDepartments(departments.sort());
+    } catch (err) {
+      console.error('Error fetching departments:', err);
+    }
+  };
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axios.get('http://localhost:5000/users/all', { withCredentials: true });
+      let filteredUsers = res.data.data.users;
+      if (currentUser?.role === 'admin') {
+        filteredUsers = res.data.data.users.filter(user => {
+          return ['collegeadmin', 'professor', 'alumni', 'student'].includes(user.role);
+        });
+      } else if (currentUser?.role === 'collegeadmin') {
+        filteredUsers = res.data.data.users.filter(user => {
+          const isRelevantRole = ['student', 'alumni', 'professor'].includes(user.role);
+          const sameDepartment = user.department &&
+            currentUser.department &&
+            user.department.toLowerCase() === currentUser.department.toLowerCase();
+          return isRelevantRole && sameDepartment;
+        });
+      }
+      setUsers(filteredUsers);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    }
+    setLoading(false);
+  };
+
+  const fetchUnapprovedUsers = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/users/unapproved', { withCredentials: true });
+      let filteredUnapprovedUsers = res.data.data.users;
+      if (currentUser?.role === 'collegeadmin') {
+        filteredUnapprovedUsers = res.data.data.users.filter(user => {
+          const isRelevantRole = ['student', 'alumni', 'professor'].includes(user.role);
+          const sameDepartment = user.department &&
+            currentUser.department &&
+            user.department.toLowerCase() === currentUser.department.toLowerCase();
+          return isRelevantRole && sameDepartment;
+        });
+      }
+      setUnapprovedUsers(filteredUnapprovedUsers);
+    } catch (err) {
+      console.error('Error fetching unapproved users:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchUsers();
+      fetchUnapprovedUsers();
+      if (currentUser.role === 'admin') {
+        fetchDepartments();
+      }
+    }
+  }, [currentUser]);
+
+  const handleApprove = async (userId) => {
+    setLoading(true);
+    try {
+      await axios.post('http://localhost:5000/users/approve', { userId }, { withCredentials: true });
+      fetchUsers();
+      fetchUnapprovedUsers();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    }
+    setLoading(false);
+  };
+
+  const handleDelete = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    setLoading(true);
+    try {
+      await axios.delete('http://localhost:5000/users/delete', { data: { userId }, withCredentials: true });
+      fetchUsers();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    }
+    setLoading(false);
+  };
+
+  const openEditModal = (user) => {
+    setEditUser({
+      ...user,
+      department: user.department || '',
+      branch: user.branch || ''
+    });
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
-    setEditStudent(null);
+    setEditUser(null);
+  };
+
+  const filteredUsers = users.filter(user => {
+    const matchesDepartment = !selectedDepartment || user.department === selectedDepartment;
+    const matchesRole = !selectedRole || user.role === selectedRole;
+    const matchesSearch = !searchQuery ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesDepartment && matchesRole && matchesSearch;
+  });
+
+  const filteredUnapprovedUsers = unapprovedUsers.filter(user => {
+    const matchesDepartment = !selectedDepartment || user.department === selectedDepartment;
+    const matchesRole = !selectedRole || user.role === selectedRole;
+    const matchesSearch = !searchQuery ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesDepartment && matchesRole && matchesSearch;
+  });
+
+  const currentUsers = activeTab === 'approved' ? filteredUsers : filteredUnapprovedUsers;
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsersPage = currentUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(currentUsers.length / usersPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleFilterChange = () => {
+    setCurrentPage(1);
   };
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    setEditStudent((prev) => ({ ...prev, [name]: value }));
+    setEditUser((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleUpdate = async () => {
     setLoading(true);
     try {
-      await axios.put('http://localhost:5000/users/students/update', {
-        studentId: editStudent._id,
-        enrollmentNumber: editStudent.enrollmentNumber,
-        department: editStudent.department,
-        branch: editStudent.branch,
-        year: editStudent.year,
-        email: editStudent.email,
-        firstName: editStudent.firstName,
-        lastName: editStudent.lastName,
+      await axios.put('http://localhost:5000/users/update', {
+        userId: editUser._id,
+        email: editUser.email,
+        role: editUser.role,
+        department: editUser.department,
+        branch: editUser.branch
       }, { withCredentials: true });
-      fetchStudents();
+      await fetchUsers();
       closeModal();
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -75,372 +244,330 @@ export default function StudentManagement() {
     setLoading(false);
   };
 
-  const fetchStudents = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await axios.get('http://localhost:5000/users/students/all', { withCredentials: true });
-      setStudents(res.data.data.students);
-    } catch (err) {
-      setError(err.response?.data?.message || err.message);
-    }
-    setLoading(false);
-  };
-
-  // Filter and search logic
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = searchTerm === '' || 
-      student.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.enrollmentNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.branch?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesApproval = filterByApproval === 'all' || 
-      (filterByApproval === 'approved' && student.isApproved) ||
-      (filterByApproval === 'pending' && !student.isApproved);
-    
-    return matchesSearch && matchesApproval;
-  });
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentStudents = filteredStudents.slice(startIndex, endIndex);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterByApproval]);
-
-  useEffect(() => { fetchStudents(); }, []);
-
-  const handleApprove = async (studentId) => {
-    setLoading(true);
-    try {
-      // Use the general approve endpoint since we're working with User model
-      await axios.post('http://localhost:5000/users/approve', { userId: studentId }, { withCredentials: true });
-      fetchStudents();
-    } catch (err) {
-      setError(err.response?.data?.message || err.message);
-    }
-    setLoading(false);
-  };
-
-  const handleDelete = async (studentId) => {
-    if (!window.confirm('Are you sure you want to delete this student?')) return;
-    setLoading(true);
-    try {
-      // Use the general delete endpoint since we're working with User model
-      await axios.delete('http://localhost:5000/users/delete', { data: { userId: studentId }, withCredentials: true });
-      fetchStudents();
-    } catch (err) {
-      setError(err.response?.data?.message || err.message);
-    }
-    setLoading(false);
-  };
+  if (!loggedIn) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
-    <div className="max-w-7xl mx-auto mt-8 px-4">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">Student Management</h2>
-      
-      {loading && <div className="flex justify-center"><div className="text-indigo-600">Loading...</div></div>}
-      {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
-      
-      {/* Search and Filter Section */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search Students</label>
-            <input
-              type="text"
-              placeholder="Search by name, email, enrollment number..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Approval</label>
-            <select
-              value={filterByApproval}
-              onChange={(e) => setFilterByApproval(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="all">All Students</option>
-              <option value="approved">Approved Only</option>
-              <option value="pending">Pending Approval</option>
-            </select>
-          </div>
-          <div className="flex items-end">
-            <div className="text-sm text-gray-600">
-              Showing {currentStudents.length} of {filteredStudents.length} students
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Students Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrollment No.</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {currentStudents.map(student => (
-                <tr key={student._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {student.firstName} {student.lastName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.enrollmentNumber}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.department || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.branch}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.year}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{student.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      student.isApproved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {student.isApproved ? 'Approved' : 'Pending'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      {canApproveStudent(currentUser, student) && !student.isApproved && (
-                        <button 
-                          onClick={() => handleApprove(student._id)} 
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs transition duration-200"
-                        >
-                          Approve
-                        </button>
-                      )}
-                      {canApproveStudent(currentUser, student) && (
-                        <>
-                          <button 
-                            onClick={() => openEditModal(student)} 
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs transition duration-200"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(student._id)} 
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs transition duration-200"
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 flex flex-col items-center p-4">
+      <div className="w-full max-w-6xl mx-auto mt-8 px-2 sm:px-4">
+        <h2 className="text-3xl font-bold mb-6 text-blue-700">User Management Dashboard</h2>
         
-        {/* Empty State */}
-        {currentStudents.length === 0 && !loading && (
-          <div className="text-center py-8">
-            <div className="text-gray-500">
-              {filteredStudents.length === 0 ? 'No students found matching your criteria.' : 'No students on this page.'}
+        {/* College Admin Registration Form (admin only) */}
+        {currentUser?.role === 'admin' && (
+          <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-bold mb-4 text-blue-700">Register College Admin</h3>
+            <form onSubmit={handleCollegeAdminRegister} className="max-w-4xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input name="firstName" value={collegeAdminForm.firstName} onChange={handleCollegeAdminInput} placeholder="First Name" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <input name="lastName" value={collegeAdminForm.lastName} onChange={handleCollegeAdminInput} placeholder="Last Name" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input name="collegeName" value={collegeAdminForm.collegeName} onChange={handleCollegeAdminInput} placeholder="College Name" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <input name="department" value={collegeAdminForm.department} onChange={handleCollegeAdminInput} placeholder="Department" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <input name="email" value={collegeAdminForm.email} onChange={handleCollegeAdminInput} placeholder="Email" type="email" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                <input name="password" value={collegeAdminForm.password} onChange={handleCollegeAdminInput} placeholder="Password" type="password" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+              </div>
+              <button type="submit" className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition duration-200">Register College Admin</button>
+            </form>
+          </div>
+        )}
+
+        {/* Admin Filtering Controls */}
+        {currentUser?.role === 'admin' && (
+          <div className="mb-6 bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-lg font-semibold mb-4 text-blue-700">Filter Users</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-blue-700 mb-2">Search</label>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    handleFilterChange();
+                  }}
+                  placeholder="Search by name or email..."
+                  className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-blue-700 mb-2">Department</label>
+                <select
+                  value={selectedDepartment}
+                  onChange={(e) => {
+                    setSelectedDepartment(e.target.value);
+                    handleFilterChange();
+                  }}
+                  className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Departments</option>
+                  {availableDepartments.map((dept) => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-blue-700 mb-2">Role</label>
+                <select
+                  value={selectedRole}
+                  onChange={(e) => {
+                    setSelectedRole(e.target.value);
+                    handleFilterChange();
+                  }}
+                  className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Roles</option>
+                  <option value="collegeadmin">College Admin</option>
+                  <option value="professor">Professor</option>
+                  <option value="alumni">Alumni</option>
+                  <option value="student">Student</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={() => {
+                    setSelectedDepartment('');
+                    setSelectedRole('');
+                    setSearchQuery('');
+                    setCurrentPage(1);
+                  }}
+                  className="w-full bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition duration-200"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 text-sm text-blue-600">
+              Showing {currentUsers.length} users
+              {selectedDepartment && ` in ${selectedDepartment} department`}
+              {selectedRole && ` with role ${selectedRole}`}
             </div>
           </div>
         )}
-      </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow-md">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
+        {loading && <div className="flex justify-center"><div className="text-blue-600">Loading...</div></div>}
+        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="border-b border-blue-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => {
+                  setActiveTab('approved');
+                  setCurrentPage(1);
+                }}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'approved'
+                    ? 'border-blue-500 text-blue-700'
+                    : 'border-transparent text-blue-500 hover:text-blue-700 hover:border-blue-300'
+                }`}
+              >
+                Approved Users ({filteredUsers.length})
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('pending');
+                  setCurrentPage(1);
+                }}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'pending'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-blue-500 hover:text-blue-700 hover:border-blue-300'
+                }`}
+              >
+                Pending Approvals ({filteredUnapprovedUsers.length})
+              </button>
+            </nav>
           </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
-                <span className="font-medium">{Math.min(endIndex, filteredStudents.length)}</span> of{' '}
-                <span className="font-medium">{filteredStudents.length}</span> results
-              </p>
+        </div>
+        {/* Table Content */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="w-full overflow-x-auto">
+            <table className="min-w-full divide-y divide-blue-200 bg-gradient-to-br from-blue-50 via-blue-100 to-white">
+              <thead className="bg-gradient-to-r from-blue-100 via-blue-50 to-white">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Department</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Branch</th>
+                  {activeTab === 'approved' && <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Status</th>}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-blue-100">
+                {currentUsersPage.map(user => (
+                  <tr key={user._id} className="hover:bg-blue-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {user.firstName} {user.lastName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.role === 'student' ? 'bg-blue-100 text-blue-800' :
+                        user.role === 'alumni' ? 'bg-green-100 text-green-800' :
+                        user.role === 'professor' ? 'bg-purple-100 text-purple-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {user.role === 'collegeadmin' ? 'College Admin' : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.department || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.branch || '-'}</td>
+                    {activeTab === 'approved' && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                          Approved
+                        </span>
+                      </td>
+                    )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex flex-col gap-2 md:flex-row md:gap-2">
+                        {activeTab === 'pending' && canApprove(currentUser, user) && (
+                          <button 
+                            onClick={() => handleApprove(user._id)} 
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs transition duration-200"
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {canEditOrDelete(currentUser, user) && (
+                          <>
+                            <button 
+                              onClick={() => openEditModal(user)} 
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs transition duration-200"
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(user._id)} 
+                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs transition duration-200"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Empty State */}
+          {currentUsers.length === 0 && (
+            <div className="text-center py-8">
+              <div className="text-blue-500">
+                {activeTab === 'approved' ? 'No approved users found.' : 'No pending approvals.'}
+              </div>
             </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+          )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-blue-200 sm:px-6">
+              <div className="flex-1 flex justify-between sm:hidden">
                 <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
-                
-                {/* Page numbers */}
-                {[...Array(totalPages)].map((_, index) => {
-                  const pageNumber = index + 1;
-                  const isCurrentPage = pageNumber === currentPage;
-                  
-                  // Show first page, last page, current page, and pages around current page
-                  if (
-                    pageNumber === 1 ||
-                    pageNumber === totalPages ||
-                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                  ) {
-                    return (
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-blue-700">
+                    Showing <span className="font-medium">{indexOfFirstUser + 1}</span> to{' '}
+                    <span className="font-medium">{Math.min(indexOfLastUser, currentUsers.length)}</span> of{' '}
+                    <span className="font-medium">{currentUsers.length}</span> results
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-blue-300 bg-white text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span className="sr-only">Previous</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
                       <button
                         key={pageNumber}
-                        onClick={() => setCurrentPage(pageNumber)}
+                        onClick={() => handlePageChange(pageNumber)}
                         className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          isCurrentPage
-                            ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          pageNumber === currentPage
+                            ? 'z-10 bg-blue-100 border-blue-500 text-blue-700'
+                            : 'bg-white border-blue-300 text-blue-700 hover:bg-blue-50'
                         }`}
                       >
                         {pageNumber}
                       </button>
-                    );
-                  } else if (
-                    pageNumber === currentPage - 2 ||
-                    pageNumber === currentPage + 2
-                  ) {
-                    return (
-                      <span key={pageNumber} className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                        ...
-                      </span>
-                    );
-                  }
-                  return null;
-                })}
-                
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </nav>
+                    ))}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-blue-300 bg-white text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span className="sr-only">Next</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
 
-      {/* Edit Modal */}
-      {showModal && editStudent && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-96">
-            <h3 className="text-lg font-bold mb-4">Edit Student</h3>
-            <div className="grid grid-cols-1 gap-4">
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">First Name</span>
-                <input 
-                  type="text" 
-                  name="firstName" 
-                  value={editStudent.firstName || ''} 
-                  onChange={handleEditChange} 
-                  className="mt-1 w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                />
+        {/* Edit Modal */}
+        {showModal && editUser && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+            <div className="bg-white p-6 rounded shadow-lg w-80">
+              <h3 className="text-lg font-bold mb-4">Edit User</h3>
+              <label className="block mb-2">Email
+                <input type="email" name="email" value={editUser.email} onChange={handleEditChange} className="w-full border px-2 py-1 rounded" />
               </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Last Name</span>
-                <input 
-                  type="text" 
-                  name="lastName" 
-                  value={editStudent.lastName || ''} 
-                  onChange={handleEditChange} 
-                  className="mt-1 w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                />
+              <label className="block mb-2">Role
+                <select name="role" value={editUser.role} onChange={handleEditChange} className="w-full border px-2 py-1 rounded">
+                  <option value="admin">Admin</option>
+                  <option value="collegeadmin">College Admin</option>
+                  <option value="professor">Professor</option>
+                  <option value="alumni">Alumni</option>
+                  <option value="student">Student</option>
+                </select>
               </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Email</span>
-                <input 
-                  type="email" 
-                  name="email" 
-                  value={editStudent.email || ''} 
-                  onChange={handleEditChange} 
-                  className="mt-1 w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Enrollment Number</span>
-                <input 
-                  type="text" 
-                  name="enrollmentNumber" 
-                  value={editStudent.enrollmentNumber || ''} 
-                  onChange={handleEditChange} 
-                  className="mt-1 w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Department</span>
-                <input 
-                  type="text" 
-                  name="department" 
-                  value={editStudent.department || ''} 
-                  onChange={handleEditChange} 
-                  className="mt-1 w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Branch</span>
-                <input 
-                  type="text" 
-                  name="branch" 
-                  value={editStudent.branch || ''} 
-                  onChange={handleEditChange} 
-                  className="mt-1 w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Year</span>
-                <input 
-                  type="text" 
-                  name="year" 
-                  value={editStudent.year || ''} 
-                  onChange={handleEditChange} 
-                  className="mt-1 w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                />
-              </label>
-            </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <button 
-                onClick={closeModal} 
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition duration-200"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleUpdate} 
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200"
-              >
-                Update
-              </button>
+              {(editUser.role === 'student' || editUser.role === 'alumni' || editUser.role === 'collegeadmin' || editUser.role === 'professor') && (
+                <label className="block mb-2">Department
+                  <input type="text" name="department" value={editUser.department || ''} onChange={handleEditChange} className="w-full border px-2 py-1 rounded" />
+                </label>
+              )}
+              {(editUser.role === 'student' || editUser.role === 'alumni') && (
+                <label className="block mb-2">Branch
+                  <input type="text" name="branch" value={editUser.branch || ''} onChange={handleEditChange} className="w-full border px-2 py-1 rounded" />
+                </label>
+              )}
+              <div className="flex justify-end gap-2 mt-4">
+                <button onClick={closeModal} className="px-3 py-1 bg-gray-300 rounded">Cancel</button>
+                <button onClick={handleUpdate} className="px-3 py-1 bg-blue-600 text-white rounded">Update</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

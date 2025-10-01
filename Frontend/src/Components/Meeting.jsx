@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { getLoggedIn, getUserData } from "../services/authService";
 import { fetchMeetings, fetchAlumniList, createMeetingRequest, approveMeeting, rejectMeeting } from '../services/api';
@@ -16,6 +14,10 @@ const Meeting = () => {
   const [editForm, setEditForm] = useState({ title: '', description: '', meetingLink: '', date: '' });
   const [rejectModal, setRejectModal] = useState({ open: false, meeting: null });
   const [rejectionReason, setRejectionReason] = useState('');
+  const [form, setForm] = useState({ title: '', description: '', meetingLink: '', date: '', alumni: '' });
+  const [alumniList, setAlumniList] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   // Handle edit form changes
   const handleEditChange = (e) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
@@ -84,9 +86,6 @@ const Meeting = () => {
     }
     setLoading(false);
   };
-  const [form, setForm] = useState({ title: '', description: '', meetingLink: '', date: '', alumni: '' });
-  const [alumniList, setAlumniList] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (loggedIn) {
@@ -124,11 +123,11 @@ const Meeting = () => {
   const canCreate = user && (user.role === 'professor' || user.role === 'collegeadmin');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex flex-col items-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 flex flex-col items-center p-4">
       <ToastContainer />
       {loggedIn ? (
         <>
-          <h2 className="text-4xl font-extrabold mb-6 text-center text-indigo-700">Meetings</h2>
+          <h2 className="text-4xl font-extrabold mb-6 text-center text-blue-700">Meetings</h2>
           
           {/* Info message for college admin */}
           {user?.role === 'collegeadmin' && (
@@ -161,38 +160,38 @@ const Meeting = () => {
           )}
           
           {canCreate && (
-            <form onSubmit={handleCreate} className="mb-8 bg-white p-6 rounded-xl shadow-lg w-full max-w-lg animate-fade-in">
-              <h3 className="text-xl font-semibold mb-4 flex items-center"><PencilSquareIcon className="h-6 w-6 text-indigo-400 mr-2" />Create Meeting Request</h3>
-              <input name="title" value={form.title} onChange={handleChange} placeholder="Title" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
-              <input name="date" value={form.date} onChange={handleChange} type="datetime-local" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
-              <input name="meetingLink" value={form.meetingLink} onChange={handleChange} placeholder="Meeting Link (e.g. Zoom/Meet)" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required />
-              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Description" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" />
-              <select name="alumni" value={form.alumni} onChange={handleChange} className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-indigo-300" required>
+            <form onSubmit={handleCreate} className="mb-8 bg-white p-6 rounded-xl shadow-lg w-full max-w-lg border-l-4 border-blue-400">
+              <h3 className="text-xl font-semibold mb-4 flex items-center"><PencilSquareIcon className="h-6 w-6 text-blue-400 mr-2" />Create Meeting Request</h3>
+              <input name="title" value={form.title} onChange={handleChange} placeholder="Title" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
+              <input name="date" value={form.date} onChange={handleChange} type="datetime-local" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
+              <input name="meetingLink" value={form.meetingLink} onChange={handleChange} placeholder="Meeting Link (e.g. Zoom/Meet)" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
+              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Description" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" />
+              <select name="alumni" value={form.alumni} onChange={handleChange} className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required>
                 <option value="">Select Alumni</option>
                 {alumniList.map(a => (
                   <option key={a._id} value={a._id}>{a.fullName} ({a.email})</option>
                 ))}
               </select>
-              <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition-colors duration-200 w-full" disabled={loading}>{loading ? 'Sending...' : 'Send Request'}</button>
+              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition-colors duration-200 w-full" disabled={loading}>{loading ? 'Sending...' : 'Send Request'}</button>
             </form>
           )}
-          <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
             {meetings.length === 0 ? (
               <div className="col-span-2 text-center text-gray-500">No meetings found.</div>
             ) : (
               meetings.map(m => (
-                <div key={m._id} className="bg-white rounded-xl shadow-md p-5 flex flex-col animate-fade-in">
+                <div key={m._id} className="bg-white rounded-xl shadow-md p-5 flex flex-col">
                   <div className="flex items-center mb-2">
-                    <VideoCameraIcon className="h-5 w-5 text-indigo-400 mr-2" />
-                    <span className="font-bold text-lg text-indigo-700">{m.title}</span>
+                    <VideoCameraIcon className="h-5 w-5 text-blue-400 mr-2" />
+                    <span className="font-bold text-lg text-blue-700">{m.title}</span>
                   </div>
                   <div className="flex items-center mb-1">
-                    <CalendarDaysIcon className="h-4 w-4 text-indigo-300 mr-1" />
+                    <CalendarDaysIcon className="h-4 w-4 text-blue-300 mr-1" />
                     <span className="text-gray-600">{m.date}</span>
                   </div>
                   <div className="flex items-center mb-1">
-                    <LinkIcon className="h-4 w-4 text-indigo-300 mr-1" />
-                    <a href={m.meetingLink} target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline break-all">{m.meetingLink}</a>
+                    <LinkIcon className="h-4 w-4 text-blue-300 mr-1" />
+                    <a href={m.meetingLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline break-all">{m.meetingLink}</a>
                   </div>
                   <div className="text-gray-700 mb-2">{m.description}</div>
                   <div className="text-gray-500 text-xs mb-1">Status: <span className={m.status === 'approved' ? 'text-green-600' : m.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}>{m.status}</span></div>
@@ -227,10 +226,10 @@ const Meeting = () => {
                   {/* Creator can edit/delete their own meeting */}
                   {user && m.createdBy && (m.createdBy._id === user._id || m.createdBy === user._id) && (
                     <div className="flex gap-2 mt-2">
-                      <button className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600" onClick={() => openEditModal(m)}>
+                      <button className="px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500" onClick={() => openEditModal(m)}>
                         Edit
                       </button>
-                      <button className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700" onClick={async () => {
+                      <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600" onClick={async () => {
                         if (!window.confirm('Are you sure you want to delete this meeting?')) return;
                         setLoading(true);
                         try {
@@ -246,9 +245,9 @@ const Meeting = () => {
                     </div>
                   )}
       {/* Edit Meeting Modal */}
-      {editModal.open && (
+      {editModal.open && editModal.meeting && editModal.meeting._id === m._id && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <form onSubmit={handleEditSubmit} className="bg-white p-6 rounded shadow-lg w-96">
+          <form onSubmit={handleEditSubmit} className="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg">
             <h3 className="text-lg font-bold mb-4">Edit Meeting</h3>
             <label className="block mb-2">Title
               <input type="text" name="title" value={editForm.title} onChange={handleEditChange} className="w-full border px-2 py-1 rounded" required />
@@ -271,9 +270,9 @@ const Meeting = () => {
       )}
 
       {/* Reject Meeting Modal */}
-      {rejectModal.open && (
+      {rejectModal.open && rejectModal.meeting && rejectModal.meeting._id === m._id && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <form onSubmit={handleRejectSubmit} className="bg-white p-6 rounded shadow-lg w-96">
+          <form onSubmit={handleRejectSubmit} className="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg">
             <h3 className="text-lg font-bold mb-4 text-red-600">Reject Meeting</h3>
             <p className="text-gray-600 mb-4">
               Please provide a reason for rejecting this meeting request. This will help the college admin understand your decision.
