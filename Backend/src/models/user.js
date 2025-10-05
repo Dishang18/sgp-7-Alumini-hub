@@ -65,34 +65,6 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  education: [
-    {
-      startYear: String,
-      endYear: String,
-      course: String,
-      school: String,
-    },
-  ],
-  workExperiences: [
-    {
-      startYear: String,
-      endYear: String,
-      company: String,
-      workTitle: String,
-      industry: String,
-    },
-  ],
-  mobileNumber: Number,
-  socialProfiles: {
-    facebook: {
-      type: String,
-      default: "https://www.facebook.com/",
-    },
-    linkedin: {
-      type: String,
-      default: "https://www.linkedin.com/",
-    },
-  },
   imageUrl: String,
   skills: [String],
   collegeName: {
