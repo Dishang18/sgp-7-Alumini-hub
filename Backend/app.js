@@ -12,8 +12,18 @@ const { cleanupExpiredEvents } = require('./src/utils/eventCleanup');
 app.use(rateLimiter);
 app.use(express.json());
 
+// CORS configuration
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',')
+  : [
+      "http://localhost:3000",    // Local development
+      "http://localhost:5173",    // Vite dev server
+      "https://alumni-hub26.netlify.app",  // Your Netlify deployment
+      "https://sgp-7-alumini-hub.onrender.com"  // Your Render backend (for any self-requests)
+    ];
+
 app.use(cors({
-  origin: "*",
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(
