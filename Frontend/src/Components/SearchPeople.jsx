@@ -3,6 +3,7 @@ import { FaSearch, FaEnvelope, FaFacebook, FaBriefcase, FaGraduationCap, FaCalen
 import { useSelector } from 'react-redux';
 import { Link } from "react-router-dom";
 import axios from 'axios';
+import API_CONFIG from '../config/api';
 
 const SearchPeople = () => {
   const loggedIn = useSelector((state) => state.loggedIn);
@@ -33,7 +34,7 @@ const SearchPeople = () => {
       }
       
       const response = await axios.get(
-        `http://localhost:5000/users/alumni?${params.toString()}`,
+        `${API_CONFIG.BASE_URL}/users/alumni?${params.toString()}`,
         { withCredentials: true }
       );
       

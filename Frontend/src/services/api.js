@@ -1,6 +1,7 @@
 import axios from 'axios';
+import API_CONFIG from '../config/api';
 
-const API_BASE = 'http://localhost:5000'; // Changed to match backend port
+const API_BASE = API_CONFIG.BASE_URL; // Use environment variable
 
 // MEETING API
 export const fetchAlumniList = async (token) => {

@@ -90,10 +90,10 @@ const getAllEventsController = async (req, res) => {
     if (userRole === "admin") {
       eventQuery = {}; // No filter - see all events
     } else if (userRole === "collegeadmin") {
-      // College admin sees events from their department or legacy events without department
+      // College admin sees events from their department or legacy events without department (case-insensitive)
       eventQuery = {
         $or: [
-          { department: userDepartment },
+          { department: { $regex: new RegExp('^' + userDepartment + '$', 'i') } },
           { department: { $exists: false } }, // Legacy events without department
           { department: null }
         ]
@@ -111,10 +111,10 @@ const getAllEventsController = async (req, res) => {
               { targetAudience: { $size: 0 } }
             ]
           },
-          // Must be in their department or no department specified
+          // Must be in their department or no department specified (case-insensitive)
           {
             $or: [
-              { department: userDepartment },
+              { department: { $regex: new RegExp('^' + userDepartment + '$', 'i') } },
               { department: { $exists: false } },
               { department: null }
             ]
@@ -134,7 +134,7 @@ const getAllEventsController = async (req, res) => {
       }
     } else if (userRole === "alumni") {
       // Alumni see events that are targeted to alumni or legacy events
-      // Simplified query to avoid nested complexity
+      // With branch and department filtering like students
       eventQuery = {
         $and: [
           // Must be for alumni or no target audience specified (legacy events)
@@ -145,21 +145,29 @@ const getAllEventsController = async (req, res) => {
               { targetAudience: { $size: 0 } }
             ]
           },
-          // Must be in their department or no department specified
+          // Must be in their department or no department specified (case-insensitive)
           {
             $or: [
-              { department: userDepartment },
+              { department: { $regex: new RegExp('^' + userDepartment + '$', 'i') } },
               { department: { $exists: false } },
               { department: null }
+            ]
+          },
+          // Must be for their branch or no branch specified
+          {
+            $or: [
+              { branch: userBranch },
+              { branch: { $exists: false } },
+              { branch: null }
             ]
           }
         ]
       };
     } else if (userRole === "professor") {
-      // Professors see events from their department or legacy events
+      // Professors see events from their department or legacy events (case-insensitive)
       eventQuery = {
         $or: [
-          { department: userDepartment },
+          { department: { $regex: new RegExp('^' + userDepartment + '$', 'i') } },
           { department: { $exists: false } }, // Legacy events
           { department: null }
         ]

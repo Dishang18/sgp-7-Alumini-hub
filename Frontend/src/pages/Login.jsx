@@ -7,6 +7,7 @@ import { login } from "../features/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import Loader from "../Components/Loader";
+import API_CONFIG from "../config/api";
 import { 
   AcademicCapIcon, 
   EyeIcon, 
@@ -72,7 +73,7 @@ function Login() {
       return;
     }
     setLoading(true);
-    const url = "http://localhost:5000/auth/login";
+    const url = API_CONFIG.getUrl("/auth/login");
 
     try {
       const response = await axios.post(url, userData, { withCredentials: true });

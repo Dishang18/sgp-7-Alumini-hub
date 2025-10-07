@@ -80,7 +80,7 @@ export default function Dashboard() {
           <p className="text-gray-500 text-base mb-3">
             Find and connect with alumni, students, and faculty.
           </p>
-          <Link to="/search" className="text-blue-700 font-medium hover:underline text-sm">
+          <Link to="/search-people" className="text-blue-700 font-medium hover:underline text-sm">
             Search People
           </Link>
         </div>

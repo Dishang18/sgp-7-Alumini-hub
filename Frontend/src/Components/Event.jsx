@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { getLoggedIn, getUserData } from '../services/authService';
+import { useSelector } from 'react-redux';
 import NotLoggedIn from './helper/NotLoggedIn';
 import { fetchEvents, createEvent, updateEvent, deleteEvent } from '../services/api';
 import { ToastContainer, toast } from 'react-toastify';
 import { CalendarDaysIcon, MapPinIcon, PencilSquareIcon, ClockIcon, TrashIcon } from '@heroicons/react/24/solid';
 
 function Event() {
-  const loggedIn = getLoggedIn();
-  const user = getUserData();
+  const loggedIn = useSelector((state) => state.loggedIn);
+  const user = useSelector((state) => state.currentUser);
   const [events, setEvents] = useState([]);
   const [eventsMeta, setEventsMeta] = useState(null);
   const [form, setForm] = useState({ 
