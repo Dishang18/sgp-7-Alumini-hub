@@ -24,16 +24,14 @@ const allowedOrigins = process.env.CORS_ORIGIN
     ];
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      console.log("❌ Blocked by CORS:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: allowedOrigins,
+  credentials: true,
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+}));
+
+// Handle preflight OPTIONS requests explicitly
+app.options('*', cors({
+  origin: allowedOrigins,
   credentials: true
 }));
 
@@ -88,6 +86,29 @@ connection.once("open", function () {
   // Run cleanup immediately on startup
   console.log("🚀 Running initial event cleanup...");
   cleanupExpiredEvents();
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('❌ Error:', err.message);
+  console.error('Stack:', err.stack);
+  
+  // Don't send stack trace in production
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error',
+    ...(isDev && { stack: err.stack })
+  });
+});
+
+// Handle 404 routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
 });
 
 app.listen(PORT, function () {
