@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getLoggedIn, getUserData } from "../services/authService";
 import { fetchMeetings, fetchAlumniList, createMeetingRequest, approveMeeting, rejectMeeting } from '../services/api';
-import axios from 'axios';
+import apiClient from '../config/apiClient';
 import { ToastContainer, toast } from 'react-toastify';
 import NotLoggedIn from './helper/NotLoggedIn';
 import { VideoCameraIcon, CalendarDaysIcon, LinkIcon, PencilSquareIcon } from '@heroicons/react/24/solid';
@@ -76,7 +76,7 @@ const Meeting = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.put(`http://localhost:5000/meeting/${editModal.meeting._id}`, editForm, { withCredentials: true });
+      await apiClient.put(`/meeting/${editModal.meeting._id}`, editForm);
       toast.success('Meeting updated!');
       const res = await fetchMeetings();
       setMeetings(res.data.meetings || res.data.data?.meetings || []);
@@ -233,7 +233,7 @@ const Meeting = () => {
                         if (!window.confirm('Are you sure you want to delete this meeting?')) return;
                         setLoading(true);
                         try {
-                          await axios.delete(`http://localhost:5000/meeting/${m._id}`, { withCredentials: true });
+                          await apiClient.delete(`/meeting/${m._id}`);
                           toast.success('Meeting deleted!');
                           const res = await fetchMeetings();
                           setMeetings(res.data.meetings || res.data.data?.meetings || []);

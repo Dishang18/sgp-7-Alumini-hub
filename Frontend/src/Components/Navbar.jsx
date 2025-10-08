@@ -11,7 +11,7 @@ import {
 import { Fragment } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../features/authSlice';
-import axios from 'axios';
+import apiClient from '../config/apiClient';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 function classNames(...classes) {
@@ -27,7 +27,7 @@ export default function Navbar({ children }) {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:5000/auth/logout', {}, { withCredentials: true });
+      await apiClient.post('/auth/logout', {});
     } catch (e) {}
     dispatch(logout());
     window.location.href = '/login';
