@@ -1,5 +1,5 @@
 import "react-toastify/dist/ReactToastify.css";
-import { 
+import {
   AcademicCapIcon,
   UserIcon,
   EnvelopeIcon,
@@ -15,11 +15,22 @@ import { useState, useCallback, memo } from "react";
 import axios from "axios";
 import Select from "react-select";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useNavigate, Link } from "react-router-dom";
 import Loader from "../Components/Loader";
 
-// Memoized InputField component to prevent unnecessary re-renders
+// Theme config (same as sidebar/login)
+const theme = {
+  gradientBg: "bg-gradient-to-br from-blue-50 to-blue-100",
+  cardBg: "bg-white",
+  cardShadow: "shadow-xl",
+  cardRadius: "rounded-xl",
+  inputFocus: "focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+  btn: "bg-blue-600 text-white hover:bg-blue-700",
+  btnDisabled: "opacity-70 cursor-not-allowed",
+  link: "text-blue-600 hover:text-blue-700",
+  divider: "border-gray-300",
+};
+
 const InputField = memo(({ icon: Icon, label, name, type = "text", placeholder, required = false, autoComplete = "off", value, onChange }) => (
   <div>
     <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-2">
@@ -37,7 +48,7 @@ const InputField = memo(({ icon: Icon, label, name, type = "text", placeholder, 
         required={required}
         value={value}
         onChange={onChange}
-        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
+        className={`block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none ${theme.inputFocus} sm:text-sm transition-colors duration-200`}
         placeholder={placeholder}
       />
     </div>
@@ -163,13 +174,14 @@ function Register() {
     setLoading(false);
   };
 
-  // Custom styles for react-select
+  // Custom styles for react-select (icon inside box)
   const customSelectStyles = {
     control: (provided, state) => ({
       ...provided,
+      paddingLeft: '2.5rem', // Space for icon
       border: '1px solid #D1D5DB',
       borderRadius: '0.5rem',
-      padding: '0.5rem',
+      minHeight: '48px',
       boxShadow: state.isFocused ? '0 0 0 2px #3B82F6' : 'none',
       borderColor: state.isFocused ? '#3B82F6' : '#D1D5DB',
       '&:hover': {
@@ -202,7 +214,7 @@ function Register() {
         theme="light"
       />
       
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className={`min-h-screen ${theme.gradientBg} py-12 px-4 sm:px-6 lg:px-8`}>
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
@@ -221,7 +233,7 @@ function Register() {
           </div>
 
           {/* Form */}
-          <div className="bg-white shadow-xl rounded-xl p-8">
+          <div className={`${theme.cardBg} ${theme.cardShadow} ${theme.cardRadius} p-8`}>
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Basic Information */}
@@ -254,7 +266,7 @@ function Register() {
                       required
                       value={formData.password ?? ''}
                       onChange={handleChange}
-                      className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
+                      className={`block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none ${theme.inputFocus} sm:text-sm transition-colors duration-200`}
                       placeholder="Create a secure password"
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -280,7 +292,9 @@ function Register() {
                   Select your role
                 </label>
                 <div className="relative">
-                  <UserGroupIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-20">
+                    <UserGroupIcon className="h-5 w-5 text-gray-400" />
+                  </span>
                   <Select
                     id="role"
                     name="role"
@@ -395,7 +409,9 @@ function Register() {
                             Degree
                           </label>
                           <div className="relative">
-                            <AcademicCapIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-20">
+                              <AcademicCapIcon className="h-5 w-5 text-gray-400" />
+                            </span>
                             <Select
                               id="degree"
                               name="degree"
@@ -471,9 +487,7 @@ function Register() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`${
-                    loading ? "opacity-70 cursor-not-allowed" : "hover:bg-blue-700"
-                  } w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200`}
+                  className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium ${theme.btn} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ${loading ? theme.btnDisabled : ""}`}
                 >
                   {loading ? (
                     <div className="flex items-center">
@@ -489,7 +503,7 @@ function Register() {
               <div className="text-center">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300" />
+                    <div className={`w-full border-t ${theme.divider}`} />
                   </div>
                   <div className="relative flex justify-center text-sm">
                     <span className="px-2 bg-white text-gray-500">Already have an account?</span>
@@ -498,7 +512,7 @@ function Register() {
                 <div className="mt-4">
                   <Link 
                     to="/login"
-                    className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200"
+                    className={`font-medium ${theme.link} transition-colors duration-200`}
                   >
                     Sign in to your account
                   </Link>

@@ -1,81 +1,185 @@
-import {
-  AcademicCapIcon,
-  UserIcon,
-  ArrowRightOnRectangleIcon,
-} from '@heroicons/react/24/outline';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../features/authSlice';
-import axios from 'axios';
+import Dropdown from './helper/Dropdown';
+import {
+  FaHome, FaCalendar, FaBriefcase, FaCommentDots, FaUpload, FaUserTie,
+  FaUserGraduate, FaVideo, FaSearch, FaEnvelopeOpenText
+} from 'react-icons/fa';
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
+const theme = {
+  sidebarBg: 'bg-gradient-to-b from-blue-50 to-blue-100',
+  activeBtn: 'bg-blue-700 text-white', // Darker blue for active
+  inactiveBtn: 'bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-900',
+  border: 'border border-blue-200',
+  logoutBtn: 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:text-red-700',
+};
+
+const NAV_LINKS = [
+  // ...existing NAV_LINKS...
+  {
+    label: 'Dashboard',
+    to: '/dashboard',
+    icon: <FaHome className="mr-1" />,
+    roles: ['admin', 'collegeadmin', 'professor', 'alumni', 'student'],
+    loggedIn: true,
+  },
+  {
+    label: 'Events',
+    to: '/events',
+    icon: <FaCalendar className="mr-1" />,
+    roles: ['admin', 'collegeadmin', 'professor', 'alumni', 'student'],
+    loggedIn: true,
+  },
+  {
+    label: 'Jobs',
+    to: '/jobs',
+    icon: <FaBriefcase className="mr-1" />,
+    roles: ['admin', 'collegeadmin', 'professor', 'alumni', 'student'],
+    loggedIn: true,
+  },
+  {
+    label: 'Posts',
+    to: '/posts',
+    icon: <FaCommentDots className="mr-1" />,
+    roles: ['alumni', 'student'],
+    loggedIn: true,
+  },
+  {
+    label: 'Bulk Import',
+    to: '/bulk-upload',
+    icon: <FaUpload className="mr-1" />,
+    roles: ['admin', 'collegeadmin'],
+    loggedIn: true,
+  },
+  {
+    label: 'User Management',
+    to: '/user-management',
+    icon: <FaUserTie className="mr-1" />,
+    roles: ['admin', 'collegeadmin'],
+    loggedIn: true,
+  },
+  {
+    label: 'Professor Management',
+    to: '/professor-branch-management',
+    icon: <FaUserTie className="mr-1" />,
+    roles: ['collegeadmin'],
+    loggedIn: true,
+  },
+  {
+    label: 'Student Management',
+    to: '/student-management',
+    icon: <FaUserGraduate className="mr-1" />,
+    roles: ['admin', 'collegeadmin', 'professor'],
+    loggedIn: true,
+  },
+  {
+    label: 'Meeting',
+    to: '/meeting',
+    icon: <FaVideo className="mr-1" />,
+    roles: ['admin', 'collegeadmin', 'professor', 'alumni', 'student'],
+    loggedIn: true,
+  },
+  {
+    label: 'Search Alumni',
+    to: '/search-people',
+    icon: <FaSearch className="mr-1" />,
+    roles: ['admin', 'collegeadmin', 'professor', 'alumni', 'student'],
+    loggedIn: true,
+  },
+  {
+    label: 'Send Mail',
+    to: '/send-mail',
+    icon: <FaEnvelopeOpenText className="mr-1" />,
+    roles: ['admin', 'collegeadmin', 'professor'],
+    loggedIn: true,
+  },
+];
 
 export default function Slidebar() {
-  const location = useLocation();
-  const user = useSelector((state) => state.currentUser);
-  const loggedIn = useSelector((state) => state.loggedIn);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const loggedIn = useSelector((state) => state.loggedIn);
+  const user = useSelector((state) => state.currentUser);
 
-  const handleLogout = async () => {
-    try {
-      await axios.post('http://localhost:5000/auth/logout', {}, { withCredentials: true });
-    } catch (e) {}
+  const handleLogout = () => {
     dispatch(logout());
-    window.location.href = '/login';
+    navigate('/home');
   };
 
-  const isActiveLink = (path) => location.pathname === path;
-
-  const navLinks = [
-    !loggedIn && { to: '/', label: 'Home' },
-    !loggedIn && { to: '/login', label: 'Login' },
-    loggedIn && { to: '/dashboard', label: 'Dashboard' },
-    loggedIn && { to: '/events', label: 'Events' },
-    loggedIn && { to: '/meeting', label: 'Meetings' },
-    loggedIn && (user?.role === 'alumni' || user?.role === 'student') && { to: '/posts', label: 'Posts' },
-    loggedIn && (user?.role === 'collegeadmin' || user?.role === 'admin') && { to: '/bulk-upload', label: 'Bulk Upload' },
-    loggedIn && user?.role === 'admin' && { to: '/user-management', label: 'User Approval' },
-    loggedIn && (user?.role === 'admin' || user?.role === 'collegeadmin') && { to: '/user-management', label: 'Users' },
-    loggedIn && (user?.role === 'admin' || user?.role === 'collegeadmin') && { to: '/branch-manager-assignment', label: 'Managers' },
-    loggedIn && (user?.role === 'admin' || user?.role === 'collegeadmin' || user?.role === 'professor') && { to: '/student-management', label: 'Students' },
-    loggedIn && user?.role === 'professor' && { to: '/professor-student-approval', label: 'Approvals' },
-  ].filter(Boolean);
-
   return (
-    <aside className="w-64 h-full bg-white border-r border-gray-200 flex flex-col py-6 px-4">
+    <aside className={`w-64 h-full ${theme.sidebarBg} border-r border-gray-200 flex flex-col py-6 px-4`}>
       {/* Logo/Brand */}
       <div className="flex items-center mb-8 px-2">
-        <AcademicCapIcon className="h-8 w-8 text-blue-600" />
+        <FaUserTie className="h-8 w-8 text-blue-600" />
         <span className="ml-2 text-2xl font-bold text-gray-800 tracking-tight select-none">
           Alumni Connect
         </span>
       </div>
       {/* Navigation */}
       <nav className="flex flex-col gap-2 flex-1">
-        {navLinks.map(({ to, label }) => (
-          <Link
-            key={to}
-            to={to}
-            className={classNames(
-              isActiveLink(to)
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-neutral-700 hover:text-blue-700 hover:bg-blue-50',
-              'w-full flex items-center px-4 py-2 rounded-lg text-base font-medium transition-all duration-200'
-            )}
-          >
-            {label}
-          </Link>
-        ))}
+        {/* Show Home/Register/Login if not logged in */}
+        {!loggedIn && (
+          <>
+            <NavLink
+              to="/home"
+              className={({ isActive }) =>
+                `flex items-center px-4 py-2 rounded-lg text-base font-medium ${
+                  isActive ? theme.activeBtn : theme.inactiveBtn
+                }`
+              }
+            >
+              <FaHome className="mr-1" /> Home
+            </NavLink>
+            <NavLink
+              to="/register"
+              className={({ isActive }) =>
+                `flex items-center px-4 py-2 rounded-lg text-base font-medium ${theme.border} ${
+                  isActive ? theme.activeBtn : theme.inactiveBtn
+                }`
+              }
+            >
+              Register
+            </NavLink>
+            <NavLink
+              to="/login"
+              className={({ isActive }) =>
+                `flex items-center px-4 py-2 rounded-lg text-base font-medium ${theme.border} ${
+                  isActive ? theme.activeBtn : theme.inactiveBtn
+                }`
+              }
+            >
+              Login
+            </NavLink>
+          </>
+        )}
+        {/* Show dynamic links for logged in users */}
+        {loggedIn && user?.role && (
+          <>
+            {NAV_LINKS.filter(link => link.loggedIn && link.roles.includes(user.role)).map(link => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) =>
+                  `flex items-center px-4 py-2 rounded-lg text-base font-medium transition-all duration-200 ${
+                    isActive ? theme.activeBtn : theme.inactiveBtn
+                  }`
+                }
+              >
+                {link.icon} {link.label}
+              </NavLink>
+            ))}
+            {/* <Dropdown /> */}
+          </>
+        )}
       </nav>
-      {/* User Info and Sign Out at the bottom */}
+      {/* User Info */}
       {loggedIn && (
-        <div className="mt-8 md:mt-0 flex flex-col gap-2">
+        <div className="mt-8 flex flex-col gap-2">
           <div className="flex items-center bg-blue-50 rounded-lg px-4 py-3">
             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-              <UserIcon className="h-5 w-5 text-blue-600" />
+              <FaUserTie className="h-5 w-5 text-blue-600" />
             </div>
             <div className="ml-3 min-w-0">
               <div className="text-base font-medium text-gray-800 truncate max-w-[8rem] md:max-w-[10rem]">
@@ -86,12 +190,16 @@ export default function Slidebar() {
               <div className="text-xs text-blue-700 capitalize">{user?.role}</div>
             </div>
           </div>
+        </div>
+      )}
+      {/* Logout Button at the end */}
+      {loggedIn && (
+        <div className="mt-auto pt-4">
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 mt-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition"
+            className={`w-full flex items-center justify-center px-4 py-2 rounded-lg text-base font-medium transition ${theme.logoutBtn}`}
           >
-            <ArrowRightOnRectangleIcon className="h-5 w-5" />
-            Sign Out
+            Logout
           </button>
         </div>
       )}
