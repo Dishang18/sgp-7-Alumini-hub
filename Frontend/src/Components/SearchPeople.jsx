@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaEnvelope, FaLinkedin, FaFacebook, FaBriefcase, FaGraduationCap, FaCalendar } from 'react-icons/fa';
+import { FaSearch, FaEnvelope, FaFacebook, FaBriefcase, FaGraduationCap, FaCalendar } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { Link } from "react-router-dom";
 import axios from 'axios';
+import API_CONFIG from '../config/api';
 
 const SearchPeople = () => {
   const loggedIn = useSelector((state) => state.loggedIn);
@@ -33,7 +34,7 @@ const SearchPeople = () => {
       }
       
       const response = await axios.get(
-        `http://localhost:5000/users/alumni?${params.toString()}`,
+        `${API_CONFIG.BASE_URL}/users/alumni?${params.toString()}`,
         { withCredentials: true }
       );
       
@@ -259,18 +260,6 @@ const SearchPeople = () => {
                       >
                         <FaEnvelope className="text-gray-600" />
                       </a>
-                      
-                      {alumni.socialProfiles?.linkedin && alumni.socialProfiles.linkedin !== 'https://www.linkedin.com/' && (
-                        <a 
-                          href={alumni.socialProfiles.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-blue-100 hover:bg-blue-200 p-2 rounded-full transition duration-200"
-                          title="LinkedIn Profile"
-                        >
-                          <FaLinkedin className="text-blue-600" />
-                        </a>
-                      )}
                       
                       {alumni.socialProfiles?.facebook && alumni.socialProfiles.facebook !== 'https://www.facebook.com/' && (
                         <a 

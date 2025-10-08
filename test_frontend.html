@@ -1,0 +1,79 @@
+// Simple frontend test to verify API integration
+// This file can be opened in the browser to test the API calls
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alumni Hub API Test</title>
+</head>
+<body>
+    <h1>Alumni Hub API Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        const resultsDiv = document.getElementById('results');
+        
+        function log(message) {
+            console.log(message);
+            resultsDiv.innerHTML += '<p>' + JSON.stringify(message) + '</p>';
+        }
+        
+        async function testAPI() {
+            try {
+                log('=== TESTING API INTEGRATION ===');
+                
+                // Test 1: Login as student
+                log('1. Logging in as student...');
+                const loginResponse = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'student@test.com',
+                        password: 'password123',
+                        role: 'student'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                log('Login response: ' + JSON.stringify(loginData));
+                
+                if (!loginResponse.ok) {
+                    throw new Error('Login failed: ' + loginData.message);
+                }
+                
+                // Test 2: Fetch events
+                log('2. Fetching events...');
+                const eventsResponse = await fetch(`${API_BASE}/event/all`, {
+                    credentials: 'include'
+                });
+                
+                const eventsData = await eventsResponse.json();
+                log('Events response: ' + JSON.stringify(eventsData));
+                log('Number of events: ' + (eventsData.data?.events?.length || 0));
+                
+                // Test 3: Search alumni
+                log('3. Searching alumni...');
+                const alumniResponse = await fetch(`${API_BASE}/users/alumni`, {
+                    credentials: 'include'
+                });
+                
+                const alumniData = await alumniResponse.json();
+                log('Alumni response: ' + JSON.stringify(alumniData));
+                log('Number of alumni: ' + (alumniData.data?.alumni?.length || 0));
+                
+                log('=== ALL TESTS COMPLETED ===');
+                
+            } catch (error) {
+                log('ERROR: ' + error.message);
+            }
+        }
+        
+        // Run tests when page loads
+        testAPI();
+    </script>
+</body>
+</html>

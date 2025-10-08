@@ -37,7 +37,8 @@ export const deleteJob = async (jobId, token) => {
 
 
 import axios from 'axios';
-const API_BASE = 'http://localhost:5000';
+import API_CONFIG from '../config/api';
+const API_BASE = API_CONFIG.BASE_URL;
 
 export const fetchJobs = async (token) => {
   return axios.get(`${API_BASE}/jobs/all`, {

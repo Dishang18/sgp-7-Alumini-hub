@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
+import { FaFacebook, FaTwitter, FaInstagram } from 'react-icons/fa';
 
 function Footer() {
   return (
@@ -18,9 +18,6 @@ function Footer() {
           </a>
           <a href="#" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
             <FaInstagram className="text-2xl text-blue-600 hover:text-blue-800 transition" />
-          </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-            <FaLinkedin className="text-2xl text-blue-600 hover:text-blue-800 transition" />
           </a>
         </div>
       </div>

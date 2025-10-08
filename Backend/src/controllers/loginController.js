@@ -21,11 +21,15 @@ const loginController = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
     // .env: JWT_COOKIE_EXPIRES_IN=7
     const days = Number(process.env.JWT_COOKIE_EXPIRES_IN) || 1;
+    
+    // Cookie configuration for both development and production
+    const isProduction = process.env.NODE_ENV === 'production';
+    
     res.cookie("jwt", token, {
       expires: new Date(Date.now() + days * 24 * 60 * 60 * 1000),
       httpOnly: true,
-      secure: false, //for localhost only
-      sameSite: 'lax',//for localhost only
+      secure: isProduction, // HTTPS required in production
+      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-origin requests in production
     });
     // All user profile data is now in the User model
     res.status(200).json({ user });
