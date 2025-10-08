@@ -67,13 +67,13 @@ const NAV_LINKS = [
     roles: ['collegeadmin'],
     loggedIn: true,
   },
-  {
-    label: 'Student Management',
-    to: '/student-management',
-    icon: <FaUserGraduate className="mr-1" />,
-    roles: ['admin', 'collegeadmin', 'professor'],
-    loggedIn: true,
-  },
+  // {
+  //   label: 'Student Management',
+  //   to: '/student-management',
+  //   icon: <FaUserGraduate className="mr-1" />,
+  //   roles: ['admin', 'collegeadmin', 'professor'],
+  //   loggedIn: true,
+  // },
   {
     label: 'Meeting',
     to: '/meeting',
