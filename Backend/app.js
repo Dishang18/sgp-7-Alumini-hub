@@ -22,11 +22,6 @@ const allowedOrigins = process.env.CORS_ORIGIN
       "https://sgp-7-alumini-hub.onrender.com"  // Your Render backend (for any self-requests)
     ];
 
-console.log('🌍 CORS Configuration:');
-console.log('Environment CORS_ORIGIN:', process.env.CORS_ORIGIN);
-console.log('Allowed Origins:', allowedOrigins);
-console.log('NODE_ENV:', process.env.NODE_ENV);
-
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
