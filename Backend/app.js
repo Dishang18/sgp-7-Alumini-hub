@@ -19,6 +19,7 @@ const allowedOrigins = process.env.CORS_ORIGIN
       "http://localhost:3000",    // Local development
       "http://localhost:5173",    // Vite dev server
       "https://alumni-hub26.netlify.app",  // Your Netlify deployment
+      "https://main--alumni-hub26.netlify.app", // Netlify preview URL (if you have one)
       "https://sgp-7-alumini-hub.onrender.com"  // Your Render backend (for any self-requests)
     ];
 
