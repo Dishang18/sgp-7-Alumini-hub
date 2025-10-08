@@ -1,146 +1,89 @@
-import axios from 'axios';
-import API_CONFIG from '../config/api';
-
-const API_BASE = API_CONFIG.BASE_URL; // Use environment variable
+import apiClient from '../config/apiClient';
 
 // MEETING API
-export const fetchAlumniList = async (token) => {
-  return axios.get(`${API_BASE}/alumniList`, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const fetchAlumniList = async () => {
+  return apiClient.get('/alumniList');
 };
 
-export const createMeetingRequest = async (meetingData, token) => {
-  return axios.post(`${API_BASE}/meeting`, meetingData, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const createMeetingRequest = async (meetingData) => {
+  return apiClient.post('/meeting', meetingData);
 };
 
-export const approveMeeting = async (id, token) => {
-  return axios.patch(`${API_BASE}/meeting/${id}/approve`, {}, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const approveMeeting = async (id) => {
+  return apiClient.patch(`/meeting/${id}/approve`, {});
 };
 
-export const rejectMeeting = async (id, rejectionReason, token) => {
-  return axios.patch(`${API_BASE}/meeting/${id}/reject`, { rejectionReason }, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const rejectMeeting = async (id, rejectionReason) => {
+  return apiClient.patch(`/meeting/${id}/reject`, { rejectionReason });
 };
 
 // EVENT API
-export const updateEvent = async (id, eventData, token) => {
-  return axios.put(`${API_BASE}/event/update/${id}`, eventData, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const updateEvent = async (id, eventData) => {
+  return apiClient.put(`/event/update/${id}`, eventData);
 };
 
-export const deleteEvent = async (id, token) => {
-  return axios.delete(`${API_BASE}/event/delete/${id}`, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const deleteEvent = async (id) => {
+  return apiClient.delete(`/event/delete/${id}`);
 };
 
-export const fetchEvents = async (token) => {
-  return axios.get(`${API_BASE}/event/all`, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const fetchEvents = async () => {
+  return apiClient.get('/event/all');
 };
 
-export const createEvent = async (eventData, token) => {
-  return axios.post(`${API_BASE}/event/create`, eventData, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const createEvent = async (eventData) => {
+  return apiClient.post('/event/create', eventData);
 };
 
-export const fetchMeetings = async (token) => {
-  return axios.get(`${API_BASE}/meeting`, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const fetchMeetings = async () => {
+  return apiClient.get('/meeting');
 };
 
-export const createMeeting = async (meetingData, token) => {
-  return axios.post(`${API_BASE}/meeting`, meetingData, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const createMeeting = async (meetingData) => {
+  return apiClient.post('/meeting', meetingData);
 };
 
-export const bulkImport = async (formData, token) => {
-  return axios.post(`${API_BASE}/bulkImport`, formData, {
-    withCredentials: true,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const bulkImport = async (formData) => {
+  return apiClient.post('/bulkImport', formData);
 };
 
 // POSTS API
 export const fetchPosts = async () => {
-  return axios.get(`${API_BASE}/posts/all`, {
-    withCredentials: true,
-  });
+  return apiClient.get('/posts/all');
 };
 
 export const createPost = async (postData) => {
-  return axios.post(`${API_BASE}/posts/create`, postData, {
-    withCredentials: true,
-  });
+  return apiClient.post('/posts/create', postData);
 };
 
 export const toggleLikePost = async (postId) => {
-  return axios.post(`${API_BASE}/posts/like/${postId}`, {}, {
-    withCredentials: true,
-  });
+  return apiClient.post(`/posts/like/${postId}`, {});
 };
 
 export const addCommentToPost = async (postId, commentData) => {
-  return axios.post(`${API_BASE}/posts/comment/${postId}`, commentData, {
-    withCredentials: true,
-  });
+  return apiClient.post(`/posts/comment/${postId}`, commentData);
 };
 
 export const deletePost = async (postId) => {
-  return axios.delete(`${API_BASE}/posts/delete/${postId}`, {
-    withCredentials: true,
-  });
+  return apiClient.delete(`/posts/delete/${postId}`);
 };
 
 export const fetchUserPosts = async (userId) => {
-  return axios.get(`${API_BASE}/posts/user/${userId}`, {
-    withCredentials: true,
-  });
+  return apiClient.get(`/posts/user/${userId}`);
 };
 
 // PROFESSOR APPROVAL API
 export const fetchPendingStudents = async () => {
-  return axios.get(`${API_BASE}/professor/pending-students`, {
-    withCredentials: true,
-  });
+  return apiClient.get('/professor/pending-students');
 };
 
 export const approveStudent = async (studentId, action) => {
-  return axios.put(`${API_BASE}/professor/student/${studentId}/approve`, 
-    { action }, 
-    { withCredentials: true }
-  );
+  return apiClient.put(`/professor/student/${studentId}/approve`, { action });
 };
 
 export const fetchApprovedStudents = async () => {
-  return axios.get(`${API_BASE}/professor/approved-students`, {
-    withCredentials: true,
-  });
+  return apiClient.get('/professor/approved-students');
 };
 
 export const fetchApprovalStats = async () => {
-  return axios.get(`${API_BASE}/professor/approval-stats`, {
-    withCredentials: true,
-  });
+  return apiClient.get('/professor/approval-stats');
 };

@@ -12,7 +12,7 @@ import {
   EyeSlashIcon
 } from "@heroicons/react/24/outline";
 import { useState, useCallback, memo } from "react";
-import axios from "axios";
+import apiClient from "../config/apiClient";
 import Select from "react-select";
 import { ToastContainer, toast } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
@@ -155,10 +155,9 @@ function Register() {
     }
     setLoading(true);
     try {
-      const response = await axios.post(
-        "http://localhost:5000/register/user",
-        formData,
-        { withCredentials: true }
+      const response = await apiClient.post(
+        "/register/user",
+        formData
       );
       const { status } = response.data;
       if (status === "success") {

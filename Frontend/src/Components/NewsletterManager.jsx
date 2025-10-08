@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../config/apiClient';
 
 export default function NewsletterManager() {
   const [newsletters, setNewsletters] = useState([]);
@@ -9,7 +9,7 @@ export default function NewsletterManager() {
 
   const fetchNewsletters = async () => {
     setLoading(true);
-    const res = await axios.get('http://localhost:5000/newsletter', { withCredentials: true });
+    const res = await apiClient.get('/newsletter');
     setNewsletters(res.data);
     setLoading(false);
   };
@@ -22,9 +22,9 @@ export default function NewsletterManager() {
     e.preventDefault();
     setLoading(true);
     if (editing) {
-      await axios.put(`http://localhost:5000/newsletter/${editing._id}`, form, { withCredentials: true });
+      await apiClient.put(`/newsletter/${editing._id}`, form);
     } else {
-      await axios.post('http://localhost:5000/newsletter', form, { withCredentials: true });
+      await apiClient.post('/newsletter', form);
     }
     setForm({ title: '', content: '' });
     setEditing(null);
@@ -39,7 +39,7 @@ export default function NewsletterManager() {
 
   const handleDelete = async id => {
     setLoading(true);
-    await axios.delete(`http://localhost:5000/newsletter/${id}`, { withCredentials: true });
+    await apiClient.delete(`/newsletter/${id}`);
     fetchNewsletters();
     setLoading(false);
   };

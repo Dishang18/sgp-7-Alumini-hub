@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../config/apiClient';
 
 export default function NewsManager() {
   const [news, setNews] = useState([]);
@@ -9,7 +9,7 @@ export default function NewsManager() {
 
   const fetchNews = async () => {
     setLoading(true);
-    const res = await axios.get('http://localhost:5000/news', { withCredentials: true });
+    const res = await apiClient.get('/news');
     setNews(res.data);
     setLoading(false);
   };
@@ -22,9 +22,9 @@ export default function NewsManager() {
     e.preventDefault();
     setLoading(true);
     if (editing) {
-      await axios.put(`http://localhost:5000/news/${editing._id}`, form, { withCredentials: true });
+      await apiClient.put(`/news/${editing._id}`, form);
     } else {
-      await axios.post('http://localhost:5000/news', form, { withCredentials: true });
+      await apiClient.post('/news', form);
     }
     setForm({ title: '', content: '' });
     setEditing(null);
@@ -39,7 +39,7 @@ export default function NewsManager() {
 
   const handleDelete = async id => {
     setLoading(true);
-    await axios.delete(`http://localhost:5000/news/${id}`, { withCredentials: true });
+    await apiClient.delete(`/news/${id}`);
     fetchNews();
     setLoading(false);
   };

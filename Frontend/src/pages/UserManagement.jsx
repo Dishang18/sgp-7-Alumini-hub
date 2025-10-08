@@ -68,10 +68,10 @@ export default function UserManagement() {
     setLoading(true);
     setError(null);
     try {
-      await axios.post('http://localhost:5000/auth/register', {
+      await apiClient.post('/auth/register', {
         ...collegeAdminForm,
         role: 'collegeadmin',
-      }, { withCredentials: true });
+      });
       setCollegeAdminForm({ email: '', password: '', firstName: '', lastName: '', collegeName: '', department: '' });
       fetchUsers();
       alert('College Admin registered successfully!');
@@ -83,7 +83,7 @@ export default function UserManagement() {
 
   const fetchDepartments = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/users/all', { withCredentials: true });
+      const res = await apiClient.get('/users/all');
       const allUsers = res.data.data.users;
       const departments = [...new Set(allUsers
         .filter(user => user.department && user.department.trim())
@@ -98,7 +98,7 @@ export default function UserManagement() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get('http://localhost:5000/users/all', { withCredentials: true });
+      const res = await apiClient.get('/users/all');
       let filteredUsers = res.data.data.users;
       if (currentUser?.role === 'admin') {
         filteredUsers = res.data.data.users.filter(user => {
@@ -122,7 +122,7 @@ export default function UserManagement() {
 
   const fetchUnapprovedUsers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/users/unapproved', { withCredentials: true });
+      const res = await apiClient.get('/users/unapproved');
       let filteredUnapprovedUsers = res.data.data.users;
       if (currentUser?.role === 'collegeadmin') {
         filteredUnapprovedUsers = res.data.data.users.filter(user => {
@@ -152,7 +152,7 @@ export default function UserManagement() {
   const handleApprove = async (userId) => {
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/users/approve', { userId }, { withCredentials: true });
+      await apiClient.post('/users/approve', { userId });
       fetchUsers();
       fetchUnapprovedUsers();
     } catch (err) {
@@ -165,7 +165,7 @@ export default function UserManagement() {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     setLoading(true);
     try {
-      await axios.delete('http://localhost:5000/users/delete', { data: { userId }, withCredentials: true });
+      await apiClient.delete('/users/delete', { data: { userId } });
       fetchUsers();
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -229,7 +229,7 @@ export default function UserManagement() {
   const handleUpdate = async () => {
     setLoading(true);
     try {
-      await axios.put('http://localhost:5000/users/update', {
+      await apiClient.put('/users/update', {
         userId: editUser._id,
         email: editUser.email,
         role: editUser.role,
