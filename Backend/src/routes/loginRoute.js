@@ -31,7 +31,12 @@ router.post(
 
 // Logout endpoint
 router.post('/logout', (req, res) => {
-	res.clearCookie('jwt', { httpOnly: true, secure: true, sameSite: 'strict' });
+	const isProduction = process.env.NODE_ENV === 'production';
+	res.clearCookie('jwt', { 
+		httpOnly: true, 
+		secure: isProduction, 
+		sameSite: isProduction ? 'none' : 'lax' 
+	});
 	res.status(200).json({ message: 'Logged out' });
 });
 
@@ -52,5 +57,19 @@ router.post(
 	},
 	loginController
 );
+
+// Add a simple auth check endpoint for debugging
+router.get('/check-auth', checkAuth, (req, res) => {
+	res.status(200).json({
+		success: true,
+		message: 'Authenticated',
+		user: {
+			id: req.user._id,
+			email: req.user.email,
+			role: req.user.role,
+			department: req.user.department
+		}
+	});
+});
 
 module.exports = router;
