@@ -8,6 +8,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import Loader from "../Components/Loader";
 import API_CONFIG from "../config/api";
+import apiClient from "../config/apiClient";
 import { 
   AcademicCapIcon, 
   EyeIcon, 
@@ -79,10 +80,9 @@ function Login() {
       return;
     }
     setLoading(true);
-    const url = API_CONFIG.getUrl("/auth/login");
 
     try {
-      const response = await axios.post(url, userData, { withCredentials: true });
+      const response = await apiClient.post('/auth/login', userData);
       const { user: userObj } = response.data;
       dispatch(login(userObj));
       toast.success("Login Successful");
