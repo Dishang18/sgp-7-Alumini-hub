@@ -10,6 +10,7 @@ import MeetingsPage from './pages/Meetings';
 import JobsPage from './pages/Jobs';
 import SearchPeople from './Components/SearchPeople';
 import Posts from './Components/Posts';
+import AuthDebug from './pages/AuthDebug';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
   <Route path="/jobs" element={<JobsPage />} />
   <Route path="/search-people" element={<SearchPeople />} />
   <Route path="/posts" element={<Posts />} />
+  <Route path="/auth-debug" element={<AuthDebug />} />
       </Routes>
     </Router>
   );

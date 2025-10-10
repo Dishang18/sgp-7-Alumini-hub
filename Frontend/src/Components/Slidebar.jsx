@@ -1,7 +1,8 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../features/authSlice';
+import apiClient from '../config/apiClient';
 import Dropdown from './helper/Dropdown';
 import {
   FaHome, FaCalendar, FaBriefcase, FaCommentDots, FaUpload, FaUserTie,
@@ -103,7 +104,12 @@ export default function Slidebar() {
   const loggedIn = useSelector((state) => state.loggedIn);
   const user = useSelector((state) => state.currentUser);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await apiClient.post('/auth/logout', {});
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     dispatch(logout());
     navigate('/home');
   };

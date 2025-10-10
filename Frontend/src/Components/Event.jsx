@@ -8,7 +8,7 @@ import { CalendarDaysIcon, MapPinIcon, PencilSquareIcon, ClockIcon, TrashIcon } 
 function Event() {
   const loggedIn = useSelector((state) => state.loggedIn);
   const user = useSelector((state) => state.currentUser);
-  const [events, setEvents] = useState([]);
+  const [events,setEvents] = useState([]);
   const [eventsMeta, setEventsMeta] = useState(null);
   const [form, setForm] = useState({ 
     title: '', 
