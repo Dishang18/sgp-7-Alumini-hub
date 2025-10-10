@@ -3,11 +3,19 @@ const { isEventExpired, getTimeUntilExpiration } = require("../utils/eventCleanu
 
 const createEventController = async (req, res) => {
   try {
-    // Only collegeadmin or professor can create events
-    if (!(req.user.role === "collegeadmin" || req.user.role === "professor")) {
+    console.log('🔍 Event creation attempt by user:', {
+      id: req.user._id,
+      email: req.user.email,
+      role: req.user.role,
+      department: req.user.department
+    });
+
+    // Only collegeadmin, admin, or professor can create events
+    if (!(req.user.role === "collegeadmin" || req.user.role === "professor" || req.user.role === "admin")) {
+      console.log('❌ Access denied for role:', req.user.role);
       return res.status(403).json({
         status: "fail",
-        message: "Only collegeadmin or professor can create events."
+        message: "Only collegeadmin, admin, or professor can create events."
       });
     }
 
@@ -18,7 +26,8 @@ const createEventController = async (req, res) => {
     const creatorDepartment = req.user.department;
     const creatorBranch = req.user.branch;
 
-    if (!creatorDepartment) {
+    // For admin users, department is optional; for others it's required
+    if (!creatorDepartment && req.user.role !== "admin") {
       return res.status(400).json({ 
         status: "fail", 
         message: "User must have a department to create events." 
@@ -32,9 +41,19 @@ const createEventController = async (req, res) => {
       location,
       description,
       createdBy,
-      department: creatorDepartment,
       targetAudience: targetAudience || ["student"], // Default to students
     };
+
+    // For admin users without department, create global events
+    if (req.user.role === "admin") {
+      if (creatorDepartment) {
+        eventData.department = creatorDepartment;
+      }
+      // Admin can create events without department restriction
+    } else {
+      // Non-admin users must have department
+      eventData.department = creatorDepartment;
+    }
 
     // If specific branch is provided, use it; otherwise use creator's branch for more specific targeting
     if (branch) {
@@ -281,8 +300,10 @@ const updateEventController = async (req, res) => {
     const userRole = req.user.role;
     const isOwner = event.createdBy.equals(req.user._id);
     
-    // Only creator (collegeadmin or professor) can update
-    if (!isOwner || !(userRole === "collegeadmin" || userRole === "professor")) {
+    // Admin can update all events, others can only update their own events
+    if (userRole === "admin") {
+      // Admin has full access
+    } else if (!isOwner || !(userRole === "collegeadmin" || userRole === "professor")) {
       return res.status(403).json({ status: "fail", message: "You can only update your own events." });
     }
     
@@ -333,8 +354,10 @@ const deleteEventController = async (req, res) => {
     if (!event) {
       return res.status(404).json({ status: "fail", message: "Event not found." });
     }
-    // Only creator (collegeadmin or professor) can delete
-    if (!event.createdBy.equals(req.user._id) || !(req.user.role === "collegeadmin" || req.user.role === "professor")) {
+    // Admin can delete all events, others can only delete their own events
+    if (req.user.role === "admin") {
+      // Admin has full access
+    } else if (!event.createdBy.equals(req.user._id) || !(req.user.role === "collegeadmin" || req.user.role === "professor")) {
       return res.status(403).json({ status: "fail", message: "You can only delete your own events." });
     }
     await event.deleteOne();

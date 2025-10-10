@@ -99,13 +99,14 @@ function Event() {
       setNewEvent({ title: '', date: '', location: '', description: '', targetAudience: ['student'], branch: '' });
       await loadEvents();
     } catch (err) {
-      toast.error('Failed to create event');
+      console.error('Create event error:', err);
+      toast.error(err.response?.data?.message || 'Failed to create event');
     }
     setLoading(false);
   };
 
-  const canCreate = user && (user.role === 'collegeadmin' || user.role === 'professor');
-  const isAdmin = user && user.role === 'admin';
+  const canCreate = user && (user.role === 'collegeadmin' || user.role === 'professor' || user.role === 'admin');
+  const isAdmin = user && (user.role === 'admin' || user.role === 'collegeadmin');
 
   const handleManualCleanup = async () => {
     if (!window.confirm('Are you sure you want to manually clean up expired events? This will remove all events that have passed their date.')) {
@@ -135,7 +136,12 @@ function Event() {
   };
 
   const canEditOrDelete = (ev) => {
-    if (!user || !(user.role === 'collegeadmin' || user.role === 'professor')) return false;
+    if (!user || !(user.role === 'collegeadmin' || user.role === 'professor' || user.role === 'admin')) return false;
+    
+    // Admin can edit/delete all events
+    if (user.role === 'admin') return true;
+    
+    // Others can only edit/delete their own events
     const createdById = ev.createdBy && (ev.createdBy._id || ev.createdBy);
     return createdById === user._id;
   };
