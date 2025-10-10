@@ -3,14 +3,14 @@ import { useSelector } from 'react-redux';
 import NotLoggedIn from './helper/NotLoggedIn';
 import { fetchEvents, createEvent, updateEvent, deleteEvent } from '../services/api';
 import { ToastContainer, toast } from 'react-toastify';
-import { CalendarDaysIcon, MapPinIcon, PencilSquareIcon, ClockIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { CalendarDaysIcon, MapPinIcon, PencilSquareIcon, ClockIcon, TrashIcon, PlusIcon, CalendarIcon, UserGroupIcon } from '@heroicons/react/24/solid';
 
 function Event() {
   const loggedIn = useSelector((state) => state.loggedIn);
   const user = useSelector((state) => state.currentUser);
   const [events,setEvents] = useState([]);
   const [eventsMeta, setEventsMeta] = useState(null);
-  const [form, setForm] = useState({ 
+  const [newEvent, setNewEvent] = useState({ 
     title: '', 
     date: '', 
     location: '', 
@@ -69,15 +69,15 @@ function Event() {
   };
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setNewEvent({ ...newEvent, [e.target.name]: e.target.value });
   };
 
   const handleTargetAudienceChange = (e) => {
     const { value, checked } = e.target;
     if (checked) {
-      setForm({ ...form, targetAudience: [...form.targetAudience, value] });
+      setNewEvent({ ...newEvent, targetAudience: [...newEvent.targetAudience, value] });
     } else {
-      setForm({ ...form, targetAudience: form.targetAudience.filter(audience => audience !== value) });
+      setNewEvent({ ...newEvent, targetAudience: newEvent.targetAudience.filter(audience => audience !== value) });
     }
   };
 
@@ -94,9 +94,9 @@ function Event() {
     e.preventDefault();
     setLoading(true);
     try {
-      await createEvent(form);
+      await createEvent(newEvent);
       toast.success('Event created!');
-      setForm({ title: '', date: '', location: '', description: '', targetAudience: ['student'], branch: '' });
+      setNewEvent({ title: '', date: '', location: '', description: '', targetAudience: ['student'], branch: '' });
       await loadEvents();
     } catch (err) {
       toast.error('Failed to create event');
@@ -186,287 +186,355 @@ function Event() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 px-4 py-8 flex flex-col items-center">
-      <ToastContainer />
+    <>
       {loggedIn ? (
-        <>
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-6 w-full max-w-2xl">
-            <h1 className="text-4xl font-extrabold text-center text-blue-700 mb-4 sm:mb-0 w-full">
-              Events
-            </h1>
-            {isAdmin && (
-              <div className="sm:ml-4 flex justify-center sm:justify-end w-full sm:w-auto items-center">
-                <button
-                  onClick={handleManualCleanup}
-                  disabled={loading}
-                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                  {loading ? 'Cleaning...' : 'Cleanup Expired'}
-                </button>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 p-6">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
+              <div className="flex items-center">
+                <CalendarDaysIcon className="h-8 w-8 text-gray-600 mr-3" />
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-800">Event Management</h1>
+                  <p className="text-gray-600 mt-1">Create and manage events for your institution</p>
+                </div>
               </div>
-            )}
+            </div>          {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Create Event Form - Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-6 border border-gray-200">
+              <div className="flex items-center mb-6">
+                <PlusIcon className="h-6 w-6 text-blue-600 mr-2" />
+                <h2 className="text-xl font-semibold text-gray-800">Create New Event</h2>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Event Title *</label>
+                  <input 
+                    name="title" 
+                    value={newEvent.title} 
+                    onChange={handleChange} 
+                    placeholder="Enter event title" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                    required 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
+                  <input 
+                    name="date" 
+                    value={newEvent.date} 
+                    onChange={handleChange} 
+                    type="date" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                    required 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                  <input 
+                    name="location" 
+                    value={newEvent.location} 
+                    onChange={handleChange} 
+                    placeholder="Enter event location" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                    required 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Target Audience *</label>
+                  <div className="space-y-2">
+                    {['student', 'alumni', 'professor'].map((audience) => (
+                      <label key={audience} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          name="targetAudience"
+                          value={audience}
+                          checked={newEvent.targetAudience.includes(audience)}
+                          onChange={handleTargetAudienceChange}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-all duration-200"
+                        />
+                        <span className="ml-3 text-sm text-gray-700 capitalize">{audience}s</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Branch (Optional)</label>
+                  <input 
+                    name="branch" 
+                    value={newEvent.branch} 
+                    onChange={handleChange} 
+                    placeholder="Specific branch" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <textarea 
+                    name="description" 
+                    value={newEvent.description} 
+                    onChange={handleChange} 
+                    placeholder="Enter event description" 
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                  />
+                </div>
+                
+                <button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" 
+                  disabled={loading}
+                >
+                  {loading ? 'Creating Event...' : 'Create Event'}
+                </button>
+              </form>
+            </div>
           </div>
-          {/* Admin Summary */}
-          {isAdmin && eventsMeta && (
-            <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 w-full max-w-2xl">
-              <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center">
-                📊 Admin Overview - All Department Events
-              </h3>
-              <div className="text-sm text-green-700 space-y-1">
-                <p><strong>Total Events:</strong> {eventsMeta.totalEvents}</p>
-                {eventsMeta.collegeAdminEventsCount > 0 && (
-                  <p><strong>Events by College Admins:</strong> 
-                    <span className="ml-1 bg-green-200 px-2 py-0.5 rounded text-green-800 font-medium">
-                      {eventsMeta.collegeAdminEventsCount}
-                    </span>
-                  </p>
-                )}
-                {eventsMeta.departmentBreakdown && Object.keys(eventsMeta.departmentBreakdown).length > 0 && (
-                  <div>
-                    <p><strong>By Department:</strong></p>
-                    <div className="ml-4 mt-1">
-                      {Object.entries(eventsMeta.departmentBreakdown).map(([dept, count]) => (
-                        <span key={dept} className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs mr-2 mb-1">
-                          {dept}: {count}
+
+            {/* Events List */}
+            <div className={canCreate ? 'lg:col-span-2' : 'lg:col-span-3'}>
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <CalendarIcon className="h-6 w-6 text-gray-600 mr-2" />
+                      <h2 className="text-xl font-semibold text-gray-800">
+                        {events.length > 0 ? `Upcoming Events` : 'No Events Found'}
+                      </h2>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                        {events.length} Events
+                      </div>
+                      {isAdmin && eventsMeta && (
+                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                          Total: {eventsMeta.totalEvents}
                         </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  {events.length === 0 ? (
+                    <div className="text-center py-12">
+                      <CalendarDaysIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-600 mb-2">No active events</h3>
+                      <p className="text-gray-500">
+                        {canCreate ? 'Create your first event to get started.' : 'Check back later for new events.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {events.map(ev => (
+                        <div key={ev._id} className="bg-gray-50 border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all duration-200 hover:bg-gray-100">
+                          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center mb-3">
+                                <h3 className="text-lg font-semibold text-gray-800 truncate">{ev.title}</h3>
+                                {isAdmin && ev.organizedBy && ev.organizedBy.role === 'collegeadmin' && (
+                                  <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    College Admin
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <div className="flex items-center text-gray-600">
+                                  <CalendarDaysIcon className="h-4 w-4 mr-2" />
+                                  <span className="text-sm">
+                                    {new Date(ev.date).toLocaleDateString('en-US', { 
+                                      weekday: 'short', 
+                                      year: 'numeric', 
+                                      month: 'short', 
+                                      day: 'numeric' 
+                                    })}
+                                  </span>
+                                  <MapPinIcon className="h-4 w-4 ml-4 mr-2" />
+                                  <span className="text-sm">{ev.location}</span>
+                                </div>
+                                
+                                {ev.description && (
+                                  <p className="text-sm text-gray-600 mb-2 leading-relaxed line-clamp-2">{ev.description}</p>
+                                )}
+                                
+                                <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+                                  {ev.department && (
+                                    <span className="bg-gray-200 px-2 py-1 rounded">Department: {ev.department}</span>
+                                  )}
+                                  {ev.branch && (
+                                    <span className="bg-gray-200 px-2 py-1 rounded">Branch: {ev.branch}</span>
+                                  )}
+                                  {ev.targetAudience && ev.targetAudience.length > 0 && (
+                                    <span className="bg-gray-200 px-2 py-1 rounded">For: {ev.targetAudience.join(', ')}</span>
+                                  )}
+                                  {ev.organizedBy && (
+                                    <span className="bg-gray-200 px-2 py-1 rounded">By: {ev.organizedBy.name} ({ev.organizedBy.role})</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {canEditOrDelete(ev) && (
+                              <div className="flex items-center space-x-2 mt-4 lg:mt-0 lg:ml-4">
+                                <button
+                                  onClick={() => handleEditClick(ev)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md flex items-center"
+                                >
+                                  <PencilSquareIcon className="h-4 w-4 mr-1" />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(ev._id)}
+                                  disabled={loading}
+                                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <TrashIcon className="h-4 w-4 mr-1" />
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-green-600 mt-2 italic">
-                💡 Events with green borders are from college admins of different departments
-              </p>
             </div>
-          )}
-          {canCreate && (
-            <form onSubmit={handleSubmit} className="mb-8 bg-white p-6 rounded-xl shadow-lg w-full max-w-lg border-l-4 border-blue-400">
-              <h2 className="text-xl font-semibold mb-4 flex items-center text-blue-700">
-                <PencilSquareIcon className="h-6 w-6 text-blue-400 mr-2" />
-                Create Event
-              </h2>
-              {user && user.department && (
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    <strong>Creating for:</strong> {user.department} Department
-                    {user.branch && <span> - {user.branch} Branch</span>}
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Only users from your department will see this event
-                  </p>
-                </div>
-              )}
-              <input name="title" value={form.title} onChange={handleChange} placeholder="Event Title" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
-              <input name="date" value={form.date} onChange={handleChange} type="date" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
-              <input name="location" value={form.location} onChange={handleChange} placeholder="Event Location" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience:</label>
-                <div className="flex flex-wrap gap-3">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="targetAudience"
-                      value="student"
-                      checked={form.targetAudience.includes('student')}
-                      onChange={handleTargetAudienceChange}
-                      className="mr-2"
-                    />
-                    Students
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="targetAudience"
-                      value="alumni"
-                      checked={form.targetAudience.includes('alumni')}
-                      onChange={handleTargetAudienceChange}
-                      className="mr-2"
-                    />
-                    Alumni
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="targetAudience"
-                      value="professor"
-                      checked={form.targetAudience.includes('professor')}
-                      onChange={handleTargetAudienceChange}
-                      className="mr-2"
-                    />
-                    Professors
-                  </label>
-                </div>
-              </div>
-              <input 
-                name="branch" 
-                value={form.branch} 
-                onChange={handleChange} 
-                placeholder={`Specific Branch (optional, default: ${user && user.branch ? user.branch : 'All branches'})`}
-                className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" 
-              />
-              <textarea name="description" value={form.description} onChange={handleChange} placeholder="Event Description" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" />
-              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition-colors duration-200 w-full" disabled={loading}>
-                {loading ? 'Creating...' : 'Create Event'}
-              </button>
-            </form>
-          )}
-          <section className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
-            {events.length === 0 ? (
-              <div className="col-span-2 text-center py-8">
-                <CalendarDaysIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <div className="text-gray-500 text-lg mb-2">No active events found</div>
-                <div className="text-gray-400 text-sm">
-                  Expired events are automatically removed. {canCreate && 'Create a new event to get started!'}
-                </div>
-              </div>
-            ) : (
-              events.map(ev => {
-                const isFromDifferentDept = isAdmin && user.department !== ev.department && ev.department;
-                const borderColor = isFromDifferentDept ? 'border-green-400' : 'border-blue-400';
-                return (
-                  <div key={ev._id} className={`bg-white rounded-xl shadow-md p-5 flex flex-col border-l-4 ${borderColor}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center">
-                        <CalendarDaysIcon className="h-5 w-5 text-blue-400 mr-2" />
-                        <span className="font-bold text-lg text-blue-700">{ev.title}</span>
-                      </div>
-                      {isAdmin && ev.organizedBy && ev.organizedBy.role === 'collegeadmin' && (
-                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                          College Admin Event
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center mb-1">
-                      <MapPinIcon className="h-4 w-4 text-blue-300 mr-1" />
-                      <span className="text-gray-600">{ev.location}</span>
-                    </div>
-                    <div className="text-gray-500 text-sm mb-2">
-                      {new Date(ev.date).toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
-                    </div>
-                    {ev.timeUntilExpiration && (
-                      <div className="flex items-center mb-2">
-                        <ClockIcon className="h-4 w-4 text-orange-400 mr-1" />
-                        <span className="text-orange-600 text-sm font-medium">{ev.timeUntilExpiration}</span>
-                      </div>
-                    )}
-                    <div className="text-gray-700 mb-2">{ev.description}</div>
-                    <div className="mt-2 space-y-1">
-                      {ev.department && (
-                        <div className={`text-xs ${isFromDifferentDept ? 'text-green-600 font-semibold' : 'text-gray-500'}`}>
-                          <span className="font-medium">Department:</span> {ev.department}
-                          {ev.branch && <span> - {ev.branch}</span>}
-                          {isFromDifferentDept && <span className="ml-2 text-green-500">• External Dept</span>}
-                        </div>
-                      )}
-                      {ev.targetAudience && ev.targetAudience.length > 0 && (
-                        <div className="text-xs text-gray-500">
-                          <span className="font-medium">For:</span> {ev.targetAudience.join(', ')}
-                        </div>
-                      )}
-                      {ev.organizedBy && (
-                        <div className={`text-xs ${isAdmin ? 'text-gray-600' : 'text-gray-500'}`}>
-                          <span className="font-medium">Organized by:</span> {ev.organizedBy.name} 
-                          <span className={`ml-1 ${ev.organizedBy.role === 'collegeadmin' && isAdmin ? 'text-green-600 font-medium' : ''}`}>
-                            ({ev.organizedBy.role})
-                          </span>
-                          {isAdmin && ev.organizedBy.department && ev.organizedBy.department !== 'Unknown' && (
-                            <span className="text-gray-500"> - {ev.organizedBy.department} Dept</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    {canEditOrDelete(ev) && (
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          className="px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500"
-                          onClick={() => handleEditClick(ev)}
-                        >Edit</button>
-                        <button
-                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                          onClick={() => handleDelete(ev._id)}
-                          disabled={loading}
-                        >Delete</button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </section>
-        </>
+            </div>
+          </div>
+        </div>
       ) : (
         <NotLoggedIn text="Event" />
       )}
+      
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg">
-            <h2 className="text-xl font-semibold mb-4 flex items-center"><PencilSquareIcon className="h-6 w-6 text-blue-400 mr-2" />Edit Event</h2>
-            <form onSubmit={handleEditSubmit}>
-              <input name="title" value={editForm.title} onChange={handleEditChange} placeholder="Title" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
-              <input name="date" value={editForm.date} onChange={handleEditChange} type="date" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
-              <input name="location" value={editForm.location} onChange={handleEditChange} placeholder="Location" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" required />
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience:</label>
-                <div className="flex flex-wrap gap-3">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="targetAudience"
-                      value="student"
-                      checked={editForm.targetAudience.includes('student')}
-                      onChange={handleEditTargetAudienceChange}
-                      className="mr-2"
-                    />
-                    Students
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="targetAudience"
-                      value="alumni"
-                      checked={editForm.targetAudience.includes('alumni')}
-                      onChange={handleEditTargetAudienceChange}
-                      className="mr-2"
-                    />
-                    Alumni
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="targetAudience"
-                      value="professor"
-                      checked={editForm.targetAudience.includes('professor')}
-                      onChange={handleEditTargetAudienceChange}
-                      className="mr-2"
-                    />
-                    Professors
-                  </label>
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={() => setShowEditModal(false)}></div>
+            
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            
+            <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200">
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center">
+                  <PencilSquareIcon className="h-6 w-6 text-gray-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-800">Edit Event</h3>
                 </div>
               </div>
-              <input 
-                name="branch" 
-                value={editForm.branch} 
-                onChange={handleEditChange} 
-                placeholder="Specific Branch (optional)"
-                className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" 
-              />
-              <textarea name="description" value={editForm.description} onChange={handleEditChange} placeholder="Description" className="block w-full mb-3 p-2 border rounded focus:ring-2 focus:ring-blue-300" />
-              <div className="flex gap-2">
-                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition-colors duration-200" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
-                <button type="button" className="bg-gray-400 text-white px-4 py-2 rounded shadow hover:bg-gray-500 transition-colors duration-200" onClick={() => setShowEditModal(false)}>Cancel</button>
-              </div>
-            </form>
+              
+              <form onSubmit={handleEditSubmit} className="px-6 py-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Event Title *</label>
+                  <input 
+                    name="title" 
+                    value={editForm.title} 
+                    onChange={handleEditChange} 
+                    placeholder="Enter event title" 
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                    required 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                  <input 
+                    name="date" 
+                    value={editForm.date} 
+                    onChange={handleEditChange} 
+                    type="date" 
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                    required 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+                  <input 
+                    name="location" 
+                    value={editForm.location} 
+                    onChange={handleEditChange} 
+                    placeholder="Enter event location" 
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                    required 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience *</label>
+                  <div className="space-y-2">
+                    {['student', 'alumni', 'professor'].map((audience) => (
+                      <label key={audience} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          name="targetAudience"
+                          value={audience}
+                          checked={editForm.targetAudience.includes(audience)}
+                          onChange={handleEditTargetAudienceChange}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-all duration-200"
+                        />
+                        <span className="ml-2 text-sm text-gray-700 capitalize">{audience}s</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Branch (Optional)</label>
+                  <input 
+                    name="branch" 
+                    value={editForm.branch} 
+                    onChange={handleEditChange} 
+                    placeholder="Specific branch"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea 
+                    name="description" 
+                    value={editForm.description} 
+                    onChange={handleEditChange} 
+                    placeholder="Enter event description" 
+                    rows={3}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowEditModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200" 
+                    disabled={loading}
+                  >
+                    {loading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
-    </main>
+      <ToastContainer />
+    </>
   );
 }
 
