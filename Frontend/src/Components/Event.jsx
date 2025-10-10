@@ -38,11 +38,33 @@ function Event() {
 
   const loadEvents = async () => {
     try {
+      console.log('🎯 Loading events...');
       const res = await fetchEvents();
-      setEvents(res.data.data.events);
-      setEventsMeta(res.data.meta);
+      console.log('📅 Events response:', res.data);
+      
+      if (res.data && res.data.data && res.data.data.events) {
+        setEvents(res.data.data.events);
+        setEventsMeta(res.data.meta);
+      } else if (res.data && res.data.events) {
+        // Handle different response structure
+        setEvents(res.data.events);
+        setEventsMeta(res.data.meta);
+      } else {
+        console.warn('⚠️ Unexpected response structure:', res.data);
+        setEvents([]);
+      }
     } catch (error) {
-      toast.error('Failed to fetch events');
+      console.error('❌ Event fetch error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      if (error.response?.status === 401) {
+        toast.error('Please log in to view events');
+      } else if (error.response?.status === 403) {
+        toast.error('You do not have permission to view events');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to fetch events');
+      }
     }
   };
 
