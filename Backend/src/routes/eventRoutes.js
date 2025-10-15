@@ -3,6 +3,10 @@ const router = express.Router();
 const {
   createEventController,
   getAllEventsController,
+  createEventRequestController,
+  getEventRequestsController,
+  approveEventRequestController,
+  rejectEventRequestController,
   updateEventController,
   deleteEventController,
   manualCleanupController,
@@ -14,6 +18,16 @@ const checkAuth = require("../middlewares/checkAuth");
 
 // Assuming you have middleware for authentication
 router.use(checkAuth);
+ 
+
+
+router.post("/request/create", createEventRequestController);
+
+router.get("/requests", getEventRequestsController);
+
+router.put("/request/:id/approve", approveEventRequestController);
+
+router.put("/request/:id/reject", rejectEventRequestController);
 
 
 // CRUD routes

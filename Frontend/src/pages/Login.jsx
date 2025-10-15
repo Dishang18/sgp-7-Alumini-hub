@@ -4,7 +4,7 @@ import Select from "react-select";
 import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 import { login } from "../features/authSlice";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import Loader from "../Components/Loader";
 import API_CONFIG from "../config/api";
@@ -49,6 +49,7 @@ function Login() {
     { value: "student", label: "Student" },
   ];
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleRoleChange = (selectedOption) => {
     setSelectedRole(selectedOption);
@@ -87,7 +88,18 @@ function Login() {
       dispatch(login(userObj));
       toast.success("Login Successful");
       setLoading(false);
-      navigate("/dashboard");
+      // Redirect to next query param if present and safe
+      const params = new URLSearchParams(location.search);
+      const next = params.get('next');
+      try {
+        if (next && next.startsWith('/') ) {
+          navigate(next);
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setLoading(false);
       if (err.response) {

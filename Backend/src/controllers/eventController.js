@@ -1,4 +1,7 @@
 const { Event } = require("../models/eventModel");
+// eventrequest.js exports the model directly (module.exports = mongoose.model('EventRequest', ...))
+// so require(...) returns the model, not an object with EventRequest property.
+const EventRequest = require("../models/eventrequest");
 const { isEventExpired, getTimeUntilExpiration } = require("../utils/eventCleanup");
 
 const createEventController = async (req, res) => {
@@ -287,6 +290,268 @@ const getAllEventsController = async (req, res) => {
     });
   }
 };
+// Create event request (collegeadmin to another collegeadmin)
+const createEventRequestController = async (req, res) => {
+  try {
+    // Only collegeadmin can create event requests
+    if (req.user.role !== "collegeadmin") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only collegeadmin can create event requests."
+      });
+    }
+
+    const { targetCollegeAdminId, title, date, location, description, targetAudience, branch } = req.body;
+    const requesterId = req.user._id;
+
+    // Validate required fields
+    if (!targetCollegeAdminId || !title || !date || !location || !description) {
+      return res.status(400).json({
+        status: "fail",
+        message: "All fields are required: targetCollegeAdminId, title, date, location, description"
+      });
+    }
+
+    // Find target college admin
+    const { User } = require("../models/user");
+    const targetAdmin = await User.findById(targetCollegeAdminId);
+
+    if (!targetAdmin || targetAdmin.role !== "collegeadmin") {
+      return res.status(400).json({
+        status: "fail",
+        message: "Invalid target college admin."
+      });
+    }
+
+    // Prevent requesting to same college
+    if (req.user.collegeName === targetAdmin.collegeName) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Cannot request events to admins from the same college."
+      });
+    }
+
+    // Create event request
+    const eventRequestData = {
+      requester: requesterId,
+      targetCollegeAdmin: targetCollegeAdminId,
+      eventDetails: {
+        title,
+        date,
+        location,
+        description,
+        targetAudience: targetAudience || ["student"],
+        branch
+      }
+    };
+
+    const eventRequest = await EventRequest.create(eventRequestData);
+
+    // Populate requester and target admin details
+    await eventRequest.populate("requester", "firstName lastName email collegeName department");
+    await eventRequest.populate("targetCollegeAdmin", "firstName lastName email collegeName department");
+
+    console.log(`Event request created: requester=${requesterId.toString()} target=${targetCollegeAdminId}`);
+    res.status(201).json({
+      status: "success",
+      data: { eventRequest },
+      message: `Event request sent to ${targetAdmin.firstName} ${targetAdmin.lastName} (${targetAdmin.collegeName})`
+    });
+  } catch (error) {
+    console.error("Error creating event request:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// Get event requests for current user (as requester or target)
+const getEventRequestsController = async (req, res) => {
+  try {
+    // Only collegeadmin can view event requests
+    if (req.user.role !== "collegeadmin") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only collegeadmin can view event requests."
+      });
+    }
+
+    const userId = req.user._id;
+
+    // Find requests where user is either requester or target
+    const eventRequests = await EventRequest.find({
+      $or: [
+        { requester: userId },
+        { targetCollegeAdmin: userId }
+      ]
+    })
+    .populate("requester", "firstName lastName email collegeName department")
+    .populate("targetCollegeAdmin", "firstName lastName email collegeName department")
+    .sort({ createdAt: -1 });
+
+  // Categorize requests (use string comparison to avoid ObjectId equals pitfalls)
+  const sentRequests = eventRequests.filter(er => er.requester && er.requester._id && er.requester._id.toString() === userId.toString());
+  const receivedRequests = eventRequests.filter(er => er.targetCollegeAdmin && er.targetCollegeAdmin._id && er.targetCollegeAdmin._id.toString() === userId.toString());
+
+  console.log(`Event requests: total=${eventRequests.length}, sent=${sentRequests.length}, received=${receivedRequests.length}`);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        sentRequests,
+        receivedRequests,
+        allRequests: eventRequests
+      },
+      meta: {
+        totalSent: sentRequests.length,
+        totalReceived: receivedRequests.length,
+        totalRequests: eventRequests.length
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching event requests:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// Approve event request (only target collegeadmin can approve)
+const approveEventRequestController = async (req, res) => {
+  try {
+    const eventRequestId = req.params.id;
+    const userId = req.user._id;
+
+    // Only collegeadmin can approve requests
+    if (req.user.role !== "collegeadmin") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only collegeadmin can approve event requests."
+      });
+    }
+
+    const eventRequest = await EventRequest.findById(eventRequestId);
+
+    if (!eventRequest) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Event request not found."
+      });
+    }
+
+    // Only target admin can approve
+    if (!eventRequest.targetCollegeAdmin.equals(userId)) {
+      return res.status(403).json({
+        status: "fail",
+        message: "You can only approve requests sent to you."
+      });
+    }
+
+    if (eventRequest.status !== "pending") {
+      return res.status(400).json({
+        status: "fail",
+        message: "Event request has already been processed."
+      });
+    }
+
+    // Create event from request
+    const eventData = {
+      title: eventRequest.eventDetails.title,
+      date: eventRequest.eventDetails.date,
+      location: eventRequest.eventDetails.location,
+      description: eventRequest.eventDetails.description,
+      createdBy: eventRequest.requester, // Event created by the requester
+      department: req.user.department, // Event in target admin's department
+      targetAudience: eventRequest.eventDetails.targetAudience,
+      branch: eventRequest.eventDetails.branch
+    };
+
+    const event = await Event.create(eventData);
+
+    // Update request status
+    eventRequest.status = "approved";
+    eventRequest.approvedEventId = event._id;
+    await eventRequest.save();
+
+    // Populate event details
+    await event.populate("createdBy", "firstName lastName email role department branch collegeName");
+
+    res.status(200).json({
+      status: "success",
+      data: { event, eventRequest },
+      message: "Event request approved and event created successfully."
+    });
+  } catch (error) {
+    console.error("Error approving event request:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// Reject event request (only target collegeadmin can reject)
+const rejectEventRequestController = async (req, res) => {
+  try {
+    const eventRequestId = req.params.id;
+    const userId = req.user._id;
+    const { rejectionReason } = req.body;
+
+    // Only collegeadmin can reject requests
+    if (req.user.role !== "collegeadmin") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only collegeadmin can reject event requests."
+      });
+    }
+
+    const eventRequest = await EventRequest.findById(eventRequestId);
+
+    if (!eventRequest) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Event request not found."
+      });
+    }
+
+    // Only target admin can reject
+    if (!eventRequest.targetCollegeAdmin.equals(userId)) {
+      return res.status(403).json({
+        status: "fail",
+        message: "You can only reject requests sent to you."
+      });
+    }
+
+    if (eventRequest.status !== "pending") {
+      return res.status(400).json({
+        status: "fail",
+        message: "Event request has already been processed."
+      });
+    }
+
+    // Update request status
+    eventRequest.status = "rejected";
+    if (rejectionReason) {
+      eventRequest.rejectionReason = rejectionReason;
+    }
+    await eventRequest.save();
+
+    res.status(200).json({
+      status: "success",
+      data: { eventRequest },
+      message: "Event request rejected successfully."
+    });
+  } catch (error) {
+    console.error("Error rejecting event request:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Internal Server Error",
+    });
+  }
+};
+
 
 // Update event (only by creator)
 const updateEventController = async (req, res) => {
@@ -563,10 +828,14 @@ const debugEventsController = async (req, res) => {
   }
 };
 
-module.exports = { 
-  createEventController, 
-  getAllEventsController, 
-  updateEventController, 
+module.exports = {
+  createEventController,
+  getAllEventsController,
+  createEventRequestController,
+  getEventRequestsController,
+  approveEventRequestController,
+  rejectEventRequestController,
+  updateEventController,
   deleteEventController,
   manualCleanupController,
   getEventsByDepartmentController,

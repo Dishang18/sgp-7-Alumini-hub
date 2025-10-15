@@ -557,7 +557,7 @@ const Meeting = () => {
         )}
         </div>
       ) : (
-        <NotLoggedIn text="Meeting" />
+        <NotLoggedIn text="Meeting" redirectTo="/meeting" />
       )}
     </div>
   );

@@ -43,7 +43,7 @@ const BulkUpload = () => {
 
   // Only show for collegeadmin or admin
   if (!loggedIn || !(user?.role === 'collegeadmin' || user?.role === 'admin')) {
-    return <NotLoggedIn text="Bulk Import (CollegeAdmin/Admin only)" />;
+    return <NotLoggedIn text="Bulk Import (CollegeAdmin/Admin only)" redirectTo="/bulk-upload" />;
   }
   // CSV column instructions for each role
   const csvInstructions = {

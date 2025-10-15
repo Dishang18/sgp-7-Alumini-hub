@@ -92,6 +92,32 @@ function Register() {
     { value: "phd", label: "PhD" },
   ];
 
+  // Department / Branch / Year options (small defaults; can be extended)
+  const departmentOptions = [
+    { value: 'Computer Science', label: 'Computer Science' },
+    { value: 'Information Technology', label: 'Information Technology' },
+    { value: 'Electronics', label: 'Electronics' },
+    { value: 'Mechanical', label: 'Mechanical' },
+    { value: 'Civil', label: 'Civil' },
+    { value: 'Other', label: 'Other' }
+  ];
+
+  const branchOptions = [
+    { value: 'Software', label: 'Software' },
+    { value: 'AI/ML', label: 'AI/ML' },
+    { value: 'Networks', label: 'Networks' },
+    { value: 'Embedded', label: 'Embedded' },
+    { value: 'General', label: 'General' },
+    { value: 'Other', label: 'Other' }
+  ];
+
+  const yearOptions = [
+    { value: '1', label: '1' },
+    { value: '2', label: '2' },
+    { value: '3', label: '3' },
+    { value: '4', label: '4' }
+  ];
+
   const handleDegreeChange = useCallback((selectedOption) => {
     setSelectedDegree(selectedOption);
     setFormData(prevData => ({
@@ -114,6 +140,18 @@ function Register() {
       ...prevData,
       [name]: value
     }));
+  }, []);
+
+  const handleDepartmentSelect = useCallback((selectedOption) => {
+    setFormData(prev => ({ ...prev, department: selectedOption?.value || '' }));
+  }, []);
+
+  const handleBranchSelect = useCallback((selectedOption) => {
+    setFormData(prev => ({ ...prev, branch: selectedOption?.value || '' }));
+  }, []);
+
+  const handleYearSelect = useCallback((selectedOption) => {
+    setFormData(prev => ({ ...prev, year: selectedOption?.value || '' }));
   }, []);
 
   const handleSubmit = async (e) => {
@@ -342,15 +380,18 @@ function Register() {
                     {/* Student-specific fields */}
                     {selectedRole?.value === 'student' && (
                       <>
-                        <InputField
-                          icon={BuildingOfficeIcon}
-                          label="Department"
-                          name="department"
-                          placeholder="e.g., Computer Science"
-                          required={true}
-                          value={formData.department || ''}
-                          onChange={handleChange}
-                        />
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                              <Select
+                                id="department"
+                                name="department"
+                                options={departmentOptions}
+                                value={departmentOptions.find(o => o.value === formData.department) || null}
+                                onChange={handleDepartmentSelect}
+                                placeholder="Select department"
+                                styles={customSelectStyles}
+                              />
+                            </div>
                         <InputField
                           icon={IdentificationIcon}
                           label="Enrollment Number"
@@ -360,25 +401,30 @@ function Register() {
                           value={formData.enrollmentNumber || ''}
                           onChange={handleChange}
                         />
-                        <InputField
-                          icon={BuildingOfficeIcon}
-                          label="Branch"
-                          name="branch"
-                          placeholder="e.g., Information Technology"
-                          required={true}
-                          value={formData.branch || ''}
-                          onChange={handleChange}
-                        />
-                        <InputField
-                          icon={CalendarDaysIcon}
-                          label="Year"
-                          name="year"
-                          type="number"
-                          placeholder="Current year (1-4)"
-                          required={true}
-                          value={formData.year || ''}
-                          onChange={handleChange}
-                        />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Branch</label>
+                          <Select
+                            id="branch"
+                            name="branch"
+                            options={branchOptions}
+                            value={branchOptions.find(o => o.value === formData.branch) || null}
+                            onChange={handleBranchSelect}
+                            placeholder="Select branch"
+                            styles={customSelectStyles}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                          <Select
+                            id="year"
+                            name="year"
+                            options={yearOptions}
+                            value={yearOptions.find(o => o.value === formData.year) || null}
+                            onChange={handleYearSelect}
+                            placeholder="Select current year"
+                            styles={customSelectStyles}
+                          />
+                        </div>
                       </>
                     )}
 
@@ -424,24 +470,30 @@ function Register() {
                             />
                           </div>
                         </div>
-                        <InputField
-                          icon={BuildingOfficeIcon}
-                          label="Department"
-                          name="department"
-                          placeholder="e.g., Computer Science"
-                          required={true}
-                          value={formData.department || ''}
-                          onChange={handleChange}
-                        />
-                        <InputField
-                          icon={BuildingOfficeIcon}
-                          label="Branch"
-                          name="branch"
-                          placeholder="e.g., Information Technology"
-                          required={true}
-                          value={formData.branch || ''}
-                          onChange={handleChange}
-                        />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                          <Select
+                            id="department"
+                            name="department"
+                            options={departmentOptions}
+                            value={departmentOptions.find(o => o.value === formData.department) || null}
+                            onChange={handleDepartmentSelect}
+                            placeholder="Select department"
+                            styles={customSelectStyles}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Branch</label>
+                          <Select
+                            id="branch"
+                            name="branch"
+                            options={branchOptions}
+                            value={branchOptions.find(o => o.value === formData.branch) || null}
+                            onChange={handleBranchSelect}
+                            placeholder="Select branch"
+                            styles={customSelectStyles}
+                          />
+                        </div>
                         <InputField
                           icon={IdentificationIcon}
                           label="Roll Number"

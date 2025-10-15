@@ -152,7 +152,7 @@ function Jobs() {
     setLoading(false);
   };
 
-  if (!loggedIn) return <NotLoggedIn text="Jobs" />;
+  if (!loggedIn) return <NotLoggedIn text="Jobs" redirectTo="/jobs" />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 flex flex-col items-center p-4">

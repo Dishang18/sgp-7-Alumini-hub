@@ -23,6 +23,7 @@ const {
   assignBranchManager,
   removeBranchManager,
   getBranchManagers,
+  getCollegeAdmins,
 } = require('../controllers/userController');
 
 // Update user (admin only)
@@ -276,6 +277,37 @@ router.get('/professors', checkAuth, (req, res, next) => {
   }
   next();
 }, getProfessorsInDepartment);
+
+// Get college admins (approved) - admin or collegeadmin
+router.get('/college-admins', checkAuth, (req, res, next) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'collegeadmin') {
+    return res.status(403).json({ status: 'fail', message: 'Only admin or college admin can view college admins.' });
+  }
+  next();
+}, getCollegeAdmins);
+
+// Get unique departments (admin or collegeadmin)
+router.get('/departments', checkAuth, (req, res, next) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'collegeadmin') {
+    return res.status(403).json({ status: 'fail', message: 'Only admin or college admin can view departments.' });
+  }
+  next();
+}, (req, res) => {
+  // controller function
+  const { getDepartments } = require('../controllers/userController');
+  getDepartments(req, res);
+});
+
+// Get all branches (optionally filter by department query param) - admin or collegeadmin
+router.get('/branches/all', checkAuth, (req, res, next) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'collegeadmin') {
+    return res.status(403).json({ status: 'fail', message: 'Only admin or college admin can view branches.' });
+  }
+  next();
+}, (req, res) => {
+  const { getAllBranches } = require('../controllers/userController');
+  getAllBranches(req, res);
+});
 
 // Get branches in department (for college admin)
 router.get('/branches', checkAuth, (req, res, next) => {

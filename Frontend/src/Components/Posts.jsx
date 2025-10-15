@@ -224,7 +224,7 @@ function Posts() {
   }
 
   if (!loggedIn) {
-    return <NotLoggedIn />;
+    return <NotLoggedIn text="Posts" redirectTo="/posts" />;
   }
 
   return (

@@ -524,6 +524,35 @@ async function getProfessorsInDepartment(req, res) {
   }
 }
 
+// Get college admins (approved)
+async function getCollegeAdmins(req, res) {
+  try {
+    if (req.user.role !== 'admin' && req.user.role !== 'collegeadmin') {
+      return res.status(403).json({ status: 'fail', message: 'Only admin or college admin can view college admins.' });
+    }
+
+    // Build filter for college admins
+    const filter = { role: 'collegeadmin', isApproved: true };
+
+    // If requester is a collegeadmin, exclude themselves from the list
+    if (req.user.role === 'collegeadmin') {
+      filter._id = { $ne: req.user._id };
+    }
+
+    const collegeAdmins = await User.find(filter)
+      .select('firstName lastName email department collegeName _id')
+      .sort({ lastName: 1, firstName: 1 });
+
+    res.status(200).json({
+      status: 'success',
+      data: { collegeAdmins }
+    });
+  } catch (error) {
+    console.error('Error fetching college admins:', error);
+    res.status(500).json({ status: 'fail', message: 'Internal Server Error' });
+  }
+}
+
 // Get all branches in college admin's department
 async function getBranchesInDepartment(req, res) {
   try {
@@ -759,6 +788,35 @@ async function getBranchManagers(req, res) {
   }
 }
 
+// Get unique departments (admin or collegeadmin)
+async function getDepartments(req, res) {
+  try {
+    if (req.user.role !== 'admin' && req.user.role !== 'collegeadmin') {
+      return res.status(403).json({ status: 'fail', message: 'Only admin or collegeadmin can view departments.' });
+    }
+    const departments = await User.distinct('department', { department: { $exists: true, $ne: '' } });
+    res.status(200).json({ status: 'success', data: { departments: departments.filter(d => d) } });
+  } catch (error) {
+    console.error('Error fetching departments:', error);
+    res.status(500).json({ status: 'fail', message: 'Internal Server Error' });
+  }
+}
+
+// Get all branches (optionally filter by department query param)
+async function getAllBranches(req, res) {
+  try {
+    // Allow admin to fetch all branches, collegeadmin can optionally pass a department query param
+    const { department } = req.query;
+    const filter = { branch: { $exists: true, $ne: '' } };
+    if (department) filter.department = { $regex: new RegExp(`^${department}$`, 'i') };
+    const branches = await User.distinct('branch', filter);
+    res.status(200).json({ status: 'success', data: { branches: branches.filter(b => b) } });
+  } catch (error) {
+    console.error('Error fetching branches:', error);
+    res.status(500).json({ status: 'fail', message: 'Internal Server Error' });
+  }
+}
+
 module.exports = {
   getAllUsers,
   approveUser,
@@ -777,4 +835,9 @@ module.exports = {
   assignBranchManager,
   removeBranchManager,
   getBranchManagers,
+  getCollegeAdmins,
 };
+
+// Export new endpoints
+module.exports.getDepartments = getDepartments;
+module.exports.getAllBranches = getAllBranches;

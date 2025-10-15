@@ -46,6 +46,7 @@ export default function UserManagement() {
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
   const [availableDepartments, setAvailableDepartments] = useState([]);
+  const [availableBranches, setAvailableBranches] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
@@ -83,14 +84,23 @@ export default function UserManagement() {
 
   const fetchDepartments = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/users/all', { withCredentials: true });
-      const allUsers = res.data.data.users;
-      const departments = [...new Set(allUsers
-        .filter(user => user.department && user.department.trim())
-        .map(user => user.department.trim()))];
+      const res = await axios.get('http://localhost:5000/users/departments', { withCredentials: true });
+      const departments = res.data.data.departments || [];
       setAvailableDepartments(departments.sort());
     } catch (err) {
       console.error('Error fetching departments:', err);
+    }
+  };
+
+  const fetchBranches = async (department) => {
+    try {
+      const url = department ? `http://localhost:5000/users/branches/all?department=${encodeURIComponent(department)}` : 'http://localhost:5000/users/branches/all';
+      const res = await axios.get(url, { withCredentials: true });
+      const branches = res.data.data.branches || [];
+      setAvailableBranches(branches.sort());
+    } catch (err) {
+      console.error('Error fetching branches:', err);
+      setAvailableBranches([]);
     }
   };
 
@@ -180,6 +190,7 @@ export default function UserManagement() {
       branch: user.branch || ''
     });
     setShowModal(true);
+    if (user.department) fetchBranches(user.department);
   };
 
   const closeModal = () => {
@@ -262,7 +273,10 @@ export default function UserManagement() {
                 <input name="firstName" value={collegeAdminForm.firstName} onChange={handleCollegeAdminInput} placeholder="First Name" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
                 <input name="lastName" value={collegeAdminForm.lastName} onChange={handleCollegeAdminInput} placeholder="Last Name" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 <input name="collegeName" value={collegeAdminForm.collegeName} onChange={handleCollegeAdminInput} placeholder="College Name" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-                <input name="department" value={collegeAdminForm.department} onChange={handleCollegeAdminInput} placeholder="Department" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                    <select name="department" value={collegeAdminForm.department} onChange={(e) => { handleCollegeAdminInput(e); fetchBranches(e.target.value); }} className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                      <option value="">Select Department</option>
+                      {availableDepartments.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
                 <input name="email" value={collegeAdminForm.email} onChange={handleCollegeAdminInput} placeholder="Email" type="email" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
                 <input name="password" value={collegeAdminForm.password} onChange={handleCollegeAdminInput} placeholder="Password" type="password" className="border border-blue-200 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
               </div>
@@ -552,12 +566,18 @@ export default function UserManagement() {
               </label>
               {(editUser.role === 'student' || editUser.role === 'alumni' || editUser.role === 'collegeadmin' || editUser.role === 'professor') && (
                 <label className="block mb-2">Department
-                  <input type="text" name="department" value={editUser.department || ''} onChange={handleEditChange} className="w-full border px-2 py-1 rounded" />
+                  <select name="department" value={editUser.department || ''} onChange={(e) => { handleEditChange(e); fetchBranches(e.target.value); }} className="w-full border px-2 py-1 rounded">
+                    <option value="">Select Department</option>
+                    {availableDepartments.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
                 </label>
               )}
               {(editUser.role === 'student' || editUser.role === 'alumni') && (
                 <label className="block mb-2">Branch
-                  <input type="text" name="branch" value={editUser.branch || ''} onChange={handleEditChange} className="w-full border px-2 py-1 rounded" />
+                  <select name="branch" value={editUser.branch || ''} onChange={handleEditChange} className="w-full border px-2 py-1 rounded">
+                    <option value="">Select Branch</option>
+                    {availableBranches.map(b => <option key={b} value={b}>{b}</option>)}
+                  </select>
                 </label>
               )}
               <div className="flex justify-end gap-2 mt-4">
