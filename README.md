@@ -80,5 +80,8 @@ npm start
 * [**Shrey Patel**](https://www.linkedin.com/in/dishang-patel-76b88b2b0/)
 * [**Veer Rana**](https://www.linkedin.com/in/dishang-patel-76b88b2b0/)
 
+## Project Link (Live Demo) : 
+* Click Here >> [**Alumni-Connect**](https://alumni-hub26.netlify.app/)
+
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
