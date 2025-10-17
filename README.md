@@ -3,7 +3,7 @@ Alumni Connect is a web application designed to enhance connections within alumn
 
 # Old Version
 The old version of this Web Application was class component-based.
-* [Have a look](https://github.com/SahilAli8808/Alumni-Connects)
+* [Have a look](https://github.com/Dishang18/sgp-7-Alumini-hub.git)
 
 ## Key Features
 
@@ -21,10 +21,6 @@ The old version of this Web Application was class component-based.
 - **Verify Alumni:** Maintain trust with a verification process.
 - **Support Tickets:** Address alumni needs with efficient support.
 
-## Getting Started
-<!-- Sreenshot -->
-![Screenshot](https://github.com/Kumailrizvi786/Alumni-Connect/blob/main/Frontend/src/assets/img/screenshots.jpg)
-<!-- Sreenshot -->
 ### Prerequisites
 * [Node.js](https://nodejs.org/en/download/)
 * [MongoDB](https://www.mongodb.com/download-center/community)
@@ -79,8 +75,10 @@ npm start
 * [Mongoose](https://mongoosejs.com/)
 
 ## Authors
-* [**Sahil Ali**](https://www.linkedin.com/in/sahilali20/)
-* [**Syed Kumail Rizvi**](https://www.linkedin.com/in/syed-kumail-rizvi/)
+* [**Dishang Patel**](https://www.linkedin.com/in/dishang-patel-76b88b2b0/)
+* [**Neel Patel**](https://www.linkedin.com/in/dishang-patel-76b88b2b0/)
+* [**Shrey Patel**](https://www.linkedin.com/in/dishang-patel-76b88b2b0/)
+* [**Veer Rana**](https://www.linkedin.com/in/dishang-patel-76b88b2b0/)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
