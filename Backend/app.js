@@ -27,6 +27,8 @@ app.use(cors({
     // allow localhost patterns if dev ports used and not explicitly listed
     const localhostRegex = /^https?:\/\/localhost(?::\d+)?$/i;
     if (localhostRegex.test(origin)) return callback(null, true);
+    // Log blocked origin for easier debugging (shows up in server logs)
+    console.warn(`CORS: blocking origin -> ${origin}`);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true
@@ -104,6 +106,16 @@ connectDBWithRetry().then((connectionInstance) => {
 });
 
 module.exports = app;
+
+// Provide a clearer response when CORS middleware rejects an origin.
+// This will return 403 with a helpful message instead of a generic 500.
+app.use((err, req, res, next) => {
+  if (err && err.message && err.message.indexOf('Not allowed by CORS') !== -1) {
+    console.warn('CORS rejection handled for origin:', req.headers.origin);
+    return res.status(403).json({ error: 'CORS blocked: origin not allowed on server. Check ALLOWED_ORIGINS.' });
+  }
+  return next(err);
+});
 
 
 // One college admin to other admin for event post. Request and post. Approval system.
