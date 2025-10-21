@@ -31,13 +31,13 @@ const ProfessorBranchManagement = () => {
       setLoading(true);
       
       // Fetch professors
-      const professorsResponse = await axios.get('http://localhost:5000/users/professors', {
+      const professorsResponse = await axios.get('/users/professors', {
         withCredentials: true
       });
       setProfessors(professorsResponse.data.data?.allProfessors || []);
       
       // Fetch branches
-      const branchesResponse = await axios.get('http://localhost:5000/users/branches', {
+      const branchesResponse = await axios.get('/users/branches', {
         withCredentials: true
       });
       setBranches(branchesResponse.data.data?.branches || []);
@@ -65,7 +65,7 @@ const ProfessorBranchManagement = () => {
     try {
       setLoading(true);
       
-      const response = await axios.post('http://localhost:5000/users/assign-professor-branch', {
+      const response = await axios.post('/users/assign-professor-branch', {
         professorId: selectedProfessor,
         branch: selectedBranch
       }, { withCredentials: true });

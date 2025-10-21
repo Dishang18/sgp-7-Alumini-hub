@@ -14,7 +14,7 @@ export default function ProfessorAlumniManagement() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get('http://localhost:5000/users/alumni-management', { withCredentials: true });
+  const res = await axios.get('/users/alumni-management', { withCredentials: true });
       setAlumni(res.data.data.users);
     } catch (err) {
       setError(err.response?.data?.message || err.message);

@@ -13,6 +13,8 @@ import { PersistGate } from "redux-persist/integration/react";
 import { persistor } from "./store/store";
 import store from "./store/store";
 import Register from "./pages/Register.jsx";
+// apply axios global defaults (baseURL from VITE_BACKEND_URL)
+import "./config/axiosDefaults";
 import Layout from "./Layout.jsx";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./Components/Dashboard.jsx";

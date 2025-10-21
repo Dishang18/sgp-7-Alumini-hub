@@ -69,7 +69,7 @@ export default function UserManagement() {
     setLoading(true);
     setError(null);
     try {
-      await axios.post('http://localhost:5000/auth/register', {
+  await axios.post('/auth/register', {
         ...collegeAdminForm,
         role: 'collegeadmin',
       }, { withCredentials: true });
@@ -84,7 +84,7 @@ export default function UserManagement() {
 
   const fetchDepartments = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/users/departments', { withCredentials: true });
+  const res = await axios.get('/users/departments', { withCredentials: true });
       const departments = res.data.data.departments || [];
       setAvailableDepartments(departments.sort());
     } catch (err) {
@@ -94,8 +94,8 @@ export default function UserManagement() {
 
   const fetchBranches = async (department) => {
     try {
-      const url = department ? `http://localhost:5000/users/branches/all?department=${encodeURIComponent(department)}` : 'http://localhost:5000/users/branches/all';
-      const res = await axios.get(url, { withCredentials: true });
+  const url = department ? `/users/branches/all?department=${encodeURIComponent(department)}` : '/users/branches/all';
+  const res = await axios.get(url, { withCredentials: true });
       const branches = res.data.data.branches || [];
       setAvailableBranches(branches.sort());
     } catch (err) {
@@ -108,7 +108,7 @@ export default function UserManagement() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get('http://localhost:5000/users/all', { withCredentials: true });
+  const res = await axios.get('/users/all', { withCredentials: true });
       let filteredUsers = res.data.data.users;
       if (currentUser?.role === 'admin') {
         filteredUsers = res.data.data.users.filter(user => {
@@ -132,7 +132,7 @@ export default function UserManagement() {
 
   const fetchUnapprovedUsers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/users/unapproved', { withCredentials: true });
+  const res = await axios.get('/users/unapproved', { withCredentials: true });
       let filteredUnapprovedUsers = res.data.data.users;
       if (currentUser?.role === 'collegeadmin') {
         filteredUnapprovedUsers = res.data.data.users.filter(user => {
@@ -162,7 +162,7 @@ export default function UserManagement() {
   const handleApprove = async (userId) => {
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/users/approve', { userId }, { withCredentials: true });
+  await axios.post('/users/approve', { userId }, { withCredentials: true });
       fetchUsers();
       fetchUnapprovedUsers();
     } catch (err) {
@@ -175,7 +175,7 @@ export default function UserManagement() {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     setLoading(true);
     try {
-      await axios.delete('http://localhost:5000/users/delete', { data: { userId }, withCredentials: true });
+  await axios.delete('/users/delete', { data: { userId }, withCredentials: true });
       fetchUsers();
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -240,7 +240,7 @@ export default function UserManagement() {
   const handleUpdate = async () => {
     setLoading(true);
     try {
-      await axios.put('http://localhost:5000/users/update', {
+  await axios.put('/users/update', {
         userId: editUser._id,
         email: editUser.email,
         role: editUser.role,

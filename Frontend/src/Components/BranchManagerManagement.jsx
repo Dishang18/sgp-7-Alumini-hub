@@ -15,7 +15,7 @@ const BranchManagerManagement = () => {
   const fetchProfessors = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/users/professors', {
+      const response = await axios.get('/users/professors', {
         withCredentials: true
       });
       setProfessors(response.data.data.allProfessors || []);
@@ -29,7 +29,7 @@ const BranchManagerManagement = () => {
   // Fetch current branch managers
   const fetchBranchManagers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/users/branch-managers', {
+      const response = await axios.get('/users/branch-managers', {
         withCredentials: true
       });
       setBranchManagers(response.data.data.branchManagers || []);
@@ -44,7 +44,7 @@ const BranchManagerManagement = () => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.post('http://localhost:5000/users/assign-branch-manager', 
+      const response = await axios.post('/users/assign-branch-manager', 
         { professorId },
         { withCredentials: true }
       );
@@ -68,7 +68,7 @@ const BranchManagerManagement = () => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.post('http://localhost:5000/users/remove-branch-manager', 
+      const response = await axios.post('/users/remove-branch-manager', 
         { professorId },
         { withCredentials: true }
       );
