@@ -13,16 +13,20 @@ app.use(rateLimiter);
 app.use(express.json());
 
 // Accept frontend dev servers on any localhost port in development
+// Configure allowed CORS origins via environment variable for deployments
+// Example: ALLOWED_ORIGINS="http://localhost:5173,http://localhost:3000,https://alumni-hub26.netlify.app"
+const rawAllowed = process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000';
+const allowedOrigins = rawAllowed.split(',').map(s => s.trim()).filter(Boolean);
+
 app.use(cors({
   origin: function(origin, callback) {
     // allow requests with no origin (like curl or mobile/native apps)
     if (!origin) return callback(null, true);
-    // Allow any localhost origin (http://localhost:PORT) to support Vite dev servers on different ports
+    // allow if origin matches one of the allowedOrigins
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // allow localhost patterns if dev ports used and not explicitly listed
     const localhostRegex = /^https?:\/\/localhost(?::\d+)?$/i;
-    if (localhostRegex.test(origin)) {
-      return callback(null, true);
-    }
-    // If origin is not localhost, reject (keeps CORS safe for non-local requests)
+    if (localhostRegex.test(origin)) return callback(null, true);
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true
