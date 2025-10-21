@@ -19,7 +19,7 @@ app.use(express.json());
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()).filter(Boolean)
   : [
-      "http://localhost:3000",    // Local development
+      "http://localhost:5000",    // Local development
       "http://localhost:5173",    // Vite dev server
       "https://alumni-hub26.netlify.app",  // Your Netlify deployment
       "https://main--alumni-hub26.netlify.app", // Netlify preview URL (if you have one)
