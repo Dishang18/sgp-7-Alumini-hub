@@ -67,7 +67,7 @@ function Register() {
     firstName: "",
     lastName: "",
     role: "",
-    department: "",
+    institute: "",
     branch: "",
     enrollmentNumber: "",
     year: "",
@@ -75,8 +75,69 @@ function Register() {
     endYear: "",
     degree: "",
     rollNumber: "",
-    collegeName: ""
   });
+
+  const instituteOptions = [
+    { value: 'CSPIT', label: 'CSPIT' },
+    { value: 'CMPICA', label: 'CMPICA' },
+    { value: 'RPCP', label: 'RPCP' },
+    { value: 'IIIM', label: 'IIIM' },
+    { value: 'PDPIAS', label: 'PDPIAS' },
+    { value: 'ARIP', label: 'ARIP' },
+    { value: 'MTIN', label: 'MTIN' },
+    { value: 'BDIPS', label: 'BDIPS' },
+    { value: 'DEPSTAR', label: 'DEPSTAR' },
+  ];
+  const branchOptionsMap = {
+    CSPIT: [
+      { value: 'CE', label: 'CE' },
+      { value: 'IT', label: 'IT' },
+      { value: 'CS', label: 'CS' },
+      { value: 'AIML', label: 'AIML' },
+      { value: 'EC', label: 'EC' },
+      { value: 'CL', label: 'CL' },
+      { value: 'ME', label: 'ME' },
+      { value: 'EE', label: 'EE' },
+    ],
+    CMPICA: [
+      { value: 'B.sc.(IT)', label: 'B.sc.(IT)' },
+      { value: 'BCA', label: 'BCA' },
+      { value: 'M.sc.(IT)', label: 'M.sc.(IT)' },
+      { value: 'MCA', label: 'MCA' },
+    ],
+    RPCP: [
+      { value: 'B.Pharm', label: 'B.Pharm' },
+      { value: 'M.Pharm', label: 'M.Pharm' },
+    ],
+    IIIM: [
+      { value: 'BBA', label: 'BBA' },
+      { value: 'MBA', label: 'MBA' },
+    ],
+    PDPIAS: [
+      { value: 'B.sc.', label: 'B.sc.' },
+      { value: 'M.sc', label: 'M.sc' },
+      { value: 'M Phil', label: 'M Phil' },
+    ],
+    ARIP: [
+      { value: 'BPT', label: 'BPT' },
+      { value: 'MPT', label: 'MPT' },
+    ],
+    MTIN: [
+      { value: 'B.sc. Nursing', label: 'B.sc. Nursing' },
+      { value: 'GNM', label: 'GNM' },
+    ],
+    BDIPS: [
+      { value: 'BMIT', label: 'BMIT' },
+      { value: 'BOP', label: 'BOP' },
+    ],
+    DEPSTAR: [
+      { value: 'DCE', label: 'DCE' },
+      { value: 'DIT', label: 'DIT' },
+      { value: 'DCS', label: 'DCS' },
+    ],
+  };
+  const [availableBranches, setAvailableBranches] = useState([]);
+  const [selectedInstitute, setSelectedInstitute] = useState(null);
 
   const navigate = useNavigate();
 
@@ -142,8 +203,11 @@ function Register() {
     }));
   }, []);
 
-  const handleDepartmentSelect = useCallback((selectedOption) => {
-    setFormData(prev => ({ ...prev, department: selectedOption?.value || '' }));
+
+  const handleInstituteSelect = useCallback((selectedOption) => {
+    setSelectedInstitute(selectedOption);
+    setFormData(prev => ({ ...prev, institute: selectedOption?.value || '', branch: '' }));
+    setAvailableBranches(selectedOption && branchOptionsMap[selectedOption.value] ? branchOptionsMap[selectedOption.value] : []);
   }, []);
 
   const handleBranchSelect = useCallback((selectedOption) => {
@@ -171,31 +235,36 @@ function Register() {
     }
     // Role-specific validation
     if (formData.role === "student") {
-      if (!formData.enrollmentNumber || !formData.department || !formData.branch || !formData.year) {
-        toast.error('enrollmentNumber, department, branch, and year are required for students.');
+      if (!formData.enrollmentNumber || !formData.institute || !formData.branch || !formData.year) {
+        toast.error('enrollmentNumber, institute, branch, and year are required for students.');
         return;
       }
     } else if (formData.role === "alumni") {
-      if (!formData.startYear || !formData.endYear || !formData.degree || !formData.department || !formData.branch || !formData.rollNumber) {
-        toast.error('startYear, endYear, degree, department, branch, and rollNumber are required for alumni.');
+      if (!formData.startYear || !formData.endYear || !formData.degree || !formData.institute || !formData.branch || !formData.rollNumber) {
+        toast.error('startYear, endYear, degree, institute, branch, and rollNumber are required for alumni.');
         return;
       }
     } else if (formData.role === "professor") {
-      if (!formData.department || !formData.branch ) {
-        toast.error('department and branch are required for professors.');
+      if (!formData.institute || !formData.branch ) {
+        toast.error('institute and branch are required for professors.');
         return;
       }
     } else if (formData.role === "collegeadmin") {
-      if (!formData.department) {
-        toast.error('department is required for college admins.');
+      if (!formData.institute) {
+        toast.error('institute is required for college admins.');
         return;
       }
     }
     setLoading(true);
     try {
+      // Map institute to department for backend compatibility
+      const payload = {
+        ...formData,
+        department: formData.institute || ""
+      };
       const response = await apiClient.post(
         "/register/user",
-        formData
+        payload
       );
       const { status } = response.data;
       if (status === "success") {
@@ -380,18 +449,18 @@ function Register() {
                     {/* Student-specific fields */}
                     {selectedRole?.value === 'student' && (
                       <>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                              <Select
-                                id="department"
-                                name="department"
-                                options={departmentOptions}
-                                value={departmentOptions.find(o => o.value === formData.department) || null}
-                                onChange={handleDepartmentSelect}
-                                placeholder="Select department"
-                                styles={customSelectStyles}
-                              />
-                            </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Institute</label>
+                          <Select
+                            id="institute"
+                            name="institute"
+                            options={instituteOptions}
+                            value={selectedInstitute}
+                            onChange={handleInstituteSelect}
+                            placeholder="Select institute"
+                            styles={customSelectStyles}
+                          />
+                        </div>
                         <InputField
                           icon={IdentificationIcon}
                           label="Enrollment Number"
@@ -406,11 +475,12 @@ function Register() {
                           <Select
                             id="branch"
                             name="branch"
-                            options={branchOptions}
-                            value={branchOptions.find(o => o.value === formData.branch) || null}
+                            options={availableBranches}
+                            value={availableBranches.find(o => o.value === formData.branch) || null}
                             onChange={handleBranchSelect}
                             placeholder="Select branch"
                             styles={customSelectStyles}
+                            isDisabled={!selectedInstitute}
                           />
                         </div>
                         <div>
@@ -471,14 +541,14 @@ function Register() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Institute</label>
                           <Select
-                            id="department"
-                            name="department"
-                            options={departmentOptions}
-                            value={departmentOptions.find(o => o.value === formData.department) || null}
-                            onChange={handleDepartmentSelect}
-                            placeholder="Select department"
+                            id="institute"
+                            name="institute"
+                            options={instituteOptions}
+                            value={selectedInstitute}
+                            onChange={handleInstituteSelect}
+                            placeholder="Select institute"
                             styles={customSelectStyles}
                           />
                         </div>
@@ -487,11 +557,12 @@ function Register() {
                           <Select
                             id="branch"
                             name="branch"
-                            options={branchOptions}
-                            value={branchOptions.find(o => o.value === formData.branch) || null}
+                            options={availableBranches}
+                            value={availableBranches.find(o => o.value === formData.branch) || null}
                             onChange={handleBranchSelect}
                             placeholder="Select branch"
                             styles={customSelectStyles}
+                            isDisabled={!selectedInstitute}
                           />
                         </div>
                         <InputField
@@ -509,24 +580,31 @@ function Register() {
                     {/* Professor-specific fields */}
                     {selectedRole?.value === 'professor' && (
                       <>
-                        <InputField
-                          icon={BuildingOfficeIcon}
-                          label="Department"
-                          name="department"
-                          placeholder="e.g., Computer Science"
-                          required={true}
-                          value={formData.department || ''}
-                          onChange={handleChange}
-                        />
-                        <InputField
-                          icon={BuildingOfficeIcon}
-                          label="Branch"
-                          name="branch"
-                          placeholder="e.g., Information Technology"
-                          required={true}
-                          value={formData.branch || ''}
-                          onChange={handleChange}
-                        />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Institute</label>
+                          <Select
+                            id="institute"
+                            name="institute"
+                            options={instituteOptions}
+                            value={selectedInstitute}
+                            onChange={handleInstituteSelect}
+                            placeholder="Select institute"
+                            styles={customSelectStyles}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Branch</label>
+                          <Select
+                            id="branch"
+                            name="branch"
+                            options={availableBranches}
+                            value={availableBranches.find(o => o.value === formData.branch) || null}
+                            onChange={handleBranchSelect}
+                            placeholder="Select branch"
+                            styles={customSelectStyles}
+                            isDisabled={!selectedInstitute}
+                          />
+                        </div>
                       </>
                     )}
                   </div>

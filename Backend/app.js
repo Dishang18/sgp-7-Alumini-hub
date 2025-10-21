@@ -46,42 +46,57 @@ app.use("/", router);
 
 const PORT = process.env.PORT || 5000;
 
-// mongoose.set("useFindAndModify", false);
-async function connectDB() {
-  try {
-    const connectionInstance = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      autoIndex: true,
-    });
-    console.log(
-      `\n MongoDB connected !! DB HOST: ${connectionInstance.connection.host}`
-    );
-  } catch (error) {
-    console.log("MONGODB connection FAILED ", error);
-    process.exit(1);
+// Start MongoDB connection with retry/backoff and modern options
+async function connectDBWithRetry(retries = 5, delayMs = 2000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const connectionInstance = await mongoose.connect(process.env.MONGODB_URI, {
+        // useNewUrlParser is default in v6+, avoid deprecated option
+        autoIndex: true,
+        // keepUnifiedTopology enabled in driver v4; let mongoose handle sensible defaults
+        serverSelectionTimeoutMS: 10000, // fail fast if server is unreachable
+      });
+      console.log(`\n MongoDB connected !! DB HOST: ${connectionInstance.connection.host}`);
+      return connectionInstance;
+    } catch (err) {
+      console.error(`MongoDB connection attempt ${attempt} failed:`, err.message || err);
+      if (attempt < retries) {
+        console.log(`Retrying in ${delayMs}ms...`);
+        await new Promise(res => setTimeout(res, delayMs));
+        delayMs *= 2; // exponential backoff
+      } else {
+        console.error('All MongoDB connection attempts failed. Exiting.');
+        process.exit(1);
+      }
+    }
   }
 }
-connectDB();
 
-const connection = mongoose.connection;
-connection.once("open", function () {
-  console.log("MongoDB connection established successfully.");
-  
-  // Set up automatic event cleanup
-  // Run every hour at minute 0 (0 * * * *)
-  // For testing, you can use '*/5 * * * *' to run every 5 minutes
-  cron.schedule('0 * * * *', () => {
-    console.log("🕐 Running scheduled event cleanup...");
+// Connect to DB, then start server and schedule cleanup
+connectDBWithRetry().then((connectionInstance) => {
+  const connection = mongoose.connection;
+  connection.once('open', function() {
+    console.log('MongoDB connection established successfully.');
+
+    // Set up automatic event cleanup
+    // Run every hour at minute 0 (0 * * * *)
+    // For testing, you can use '*/5 * * * *' to run every 5 minutes
+    cron.schedule('0 * * * *', () => {
+      console.log('🕐 Running scheduled event cleanup...');
+      cleanupExpiredEvents();
+    });
+
+    // Run cleanup immediately on startup
+    console.log('🚀 Running initial event cleanup...');
     cleanupExpiredEvents();
   });
-  
-  // Run cleanup immediately on startup
-  console.log("🚀 Running initial event cleanup...");
-  cleanupExpiredEvents();
-});
 
-app.listen(PORT, function () {
-  console.log("Server is running on port : ", PORT);
+  app.listen(PORT, function () {
+    console.log('Server is running on port : ', PORT);
+  });
+}).catch(err => {
+  console.error('Failed to start server due to DB connection error:', err);
+  process.exit(1);
 });
 
 module.exports = app;

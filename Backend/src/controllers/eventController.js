@@ -221,7 +221,21 @@ const getAllEventsController = async (req, res) => {
 
     // Filter out expired events and add expiration status to remaining events
     const activeEvents = allEvents
-      .filter(event => !isEventExpired(event.date))
+      .filter(event => {
+        if (isEventExpired(event.date)) return false;
+        // For student/alumni: Only show invited events if department matches and invitedViaEventRequest is set (i.e., approved invitation)
+        if (["student", "alumni"].includes(userRole)) {
+          if (event.invitedViaEventRequest) {
+            // Only show if event.department matches userDepartment (already filtered by query), and event was created via invitation
+            return true;
+          } else {
+            // Normal event, show as usual
+            return true;
+          }
+        }
+        // For other roles, show as usual
+        return true;
+      })
       .map(event => ({
         ...event.toObject(),
         timeUntilExpiration: getTimeUntilExpiration(event.date),
@@ -457,6 +471,7 @@ const approveEventRequestController = async (req, res) => {
     }
 
     // Create event from request
+
     const eventData = {
       title: eventRequest.eventDetails.title,
       date: eventRequest.eventDetails.date,
@@ -465,7 +480,8 @@ const approveEventRequestController = async (req, res) => {
       createdBy: eventRequest.requester, // Event created by the requester
       department: req.user.department, // Event in target admin's department
       targetAudience: eventRequest.eventDetails.targetAudience,
-      branch: eventRequest.eventDetails.branch
+      branch: eventRequest.eventDetails.branch,
+      invitedViaEventRequest: eventRequest._id // Mark as invited event
     };
 
     const event = await Event.create(eventData);

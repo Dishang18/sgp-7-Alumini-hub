@@ -35,6 +35,12 @@ const eventSchema = new mongoose.Schema({
     enum: ["student", "alumni", "professor", "collegeadmin"],
     default: ["student"], // By default, events are for students
   },
+  // Indicates if this event was created via an approved invitation from another college
+  invitedViaEventRequest: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "EventRequest",
+    required: false,
+  },
 });
 
 const Event = mongoose.models.Event || mongoose.model("Event", eventSchema);

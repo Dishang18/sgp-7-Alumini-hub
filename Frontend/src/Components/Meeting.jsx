@@ -140,12 +140,12 @@ const Meeting = () => {
           {/* Info messages */}
           {user?.role === 'collegeadmin' && (
             <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl max-w-4xl">
-              <p className="text-sm text-blue-800">
+              {/* <p className="text-sm text-blue-800">
                 <strong>College Admin:</strong> You can only create meetings with alumni from your department: <strong>{user.department}</strong>
-              </p>
-              <p className="text-sm text-blue-700 mt-1">
+              </p> */}
+              {/* <p className="text-sm text-blue-700 mt-1">
                 Alumni are required to provide reasons when rejecting meetings, which will be displayed in rejected meeting cards.
-              </p>
+              </p> */}
             </div>
           )}
           

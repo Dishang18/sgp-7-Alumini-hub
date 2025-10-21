@@ -12,6 +12,10 @@ const MeetingSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+// TTL index: automatically remove meetings when their `date` is in the past
+// expireAfterSeconds: 0 means remove as soon as `date` < now
+MeetingSchema.index({ date: 1 }, { expireAfterSeconds: 0 });
+
 const Meeting = mongoose.models.Meeting || mongoose.model("Meeting", MeetingSchema);
 
 module.exports = { Meeting };
