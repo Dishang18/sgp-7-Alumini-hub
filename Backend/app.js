@@ -12,11 +12,19 @@ const { cleanupExpiredEvents } = require('./src/utils/eventCleanup');
 app.use(rateLimiter);
 app.use(express.json());
 
-// Accept frontend dev servers on any localhost port in development
-// Configure allowed CORS origins via environment variable for deployments
-// Example: ALLOWED_ORIGINS="http://localhost:5173,http://localhost:3000,https://alumni-hub26.netlify.app"
-const rawAllowed = process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000';
-const allowedOrigins = rawAllowed.split(',').map(s => s.trim()).filter(Boolean);
+// Accept frontend dev servers on localhost and configure allowed CORS origins via environment variable.
+// Use `CORS_ORIGIN` if present (comma-separated), otherwise fall back to a sensible default list.
+// Example (Render env var):
+// CORS_ORIGIN="https://alumni-hub26.netlify.app,http://localhost:5173"
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()).filter(Boolean)
+  : [
+      "http://localhost:3000",    // Local development
+      "http://localhost:5173",    // Vite dev server
+      "https://alumni-hub26.netlify.app",  // Your Netlify deployment
+      "https://main--alumni-hub26.netlify.app", // Netlify preview URL (if you have one)
+      "https://sgp-7-alumini-hub.onrender.com"  // Your Render backend (for self-requests)
+    ];
 
 app.use(cors({
   origin: function(origin, callback) {
