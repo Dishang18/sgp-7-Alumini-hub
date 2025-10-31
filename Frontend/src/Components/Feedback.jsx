@@ -38,7 +38,7 @@ const Feedback = () => {
             {/* Experience Rating */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                How would you rate your overall experience with Alumni Connect?
+                How would you rate your overall experience with CharuVerse?
               </label>
               <div className="flex items-center gap-4">
                 <input
@@ -114,7 +114,7 @@ const Feedback = () => {
             {/* Meaningful Dropdown */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Please select the option that best describes your primary reason for using Alumni Connect:
+                Please select the option that best describes your primary reason for using CharuVerse:
               </label>
               <select
                 value={selectedOption}

@@ -118,7 +118,7 @@ export default function Slidebar() {
     <aside className={`w-64 h-full ${theme.sidebarBg} border-r border-gray-200 flex flex-col py-6 px-4`}>
       {/* Logo/Brand */}
       <div className="flex items-center mb-8 px-2">
-  <img src="/logo.png" alt="Alumni Connect logo" className="h-8 w-8 rounded-md border-2 border-blue-600 object-contain" loading="lazy" />
+  <img src="/logo.png" alt="CharuVerse logo" className="h-8 w-8 rounded-md border-2 border-blue-600 object-contain" loading="lazy" />
         <span className="ml-2 text-2xl font-bold text-gray-800 tracking-tight select-none">
            CharuVerse
         </span>

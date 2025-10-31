@@ -14,7 +14,7 @@ export default function Home() {
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100">
       <section className="max-w-2xl w-full text-center mb-12">
         <h1 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
-          Welcome to <span className="text-blue-700">Alumni Connect</span>
+          Welcome to <span className="text-blue-700">CharuVerse</span>
         </h1>
         <p className="text-lg md:text-xl text-gray-500 mb-6">
           A modern hub for alumni, students, and faculty to connect, share, and grow together.

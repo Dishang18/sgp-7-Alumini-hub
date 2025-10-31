@@ -16,7 +16,7 @@ function Layout() {
       {/* Topbar for mobile */}
       <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-200 h-16 px-4">
         <div className="text-xl font-bold text-blue-700 flex items-center gap-2">
-          <span>Alumni Connect</span>
+          <span>CharuVerse</span>
         </div>
         <button
           className="p-2 rounded-md text-blue-700 hover:bg-blue-50"

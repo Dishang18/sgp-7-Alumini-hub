@@ -104,7 +104,7 @@ function Topbar() {
       <div className="flex items-center mb-4 lg:mb-0">
         <span> <FaUserTie className="mr-1 h-6 w-8" /></span>
         <h2 className="text-2xl font-extrabold text-gray-800">
-          Alumni Connect
+          CharuVerse
         </h2>
       </div>
 

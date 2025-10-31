@@ -163,7 +163,7 @@ function Login() {
                   {/* Logo and Header */}
                   {/* Main centered logo (replaces small logo + title) */}
                   <div className="flex justify-center items-center">
-                    <img src="/main.png" alt="Alumni Connect" className="h-24 w-auto object-contain" loading="lazy" />
+                    <img src="/main.png" alt="CharuVerse" className="h-24 w-auto object-contain" loading="lazy" />
                   </div>
                   <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">Welcome back</h2>
                   <p className="mt-2 text-center text-sm text-gray-600">Sign in to your professional alumni account</p>
@@ -289,7 +289,7 @@ function Login() {
                     <div className={`w-full border-t ${theme.divider}`} />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">New to Alumni Connect?</span>
+                    <span className="px-2 bg-white text-gray-500">New to CharuVerse?</span>
                   </div>
                 </div>
               </div>
