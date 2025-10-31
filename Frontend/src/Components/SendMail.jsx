@@ -58,7 +58,7 @@ const SendMail = () => {
       <div className="max-w-xl mx-auto w-full">
         <div className="flex flex-col items-center mb-8">
           <AcademicCapIcon className="h-12 w-12 text-blue-600" />
-          <span className="ml-2 text-2xl font-bold text-gray-900">Alumni Connect</span>
+          <span className="ml-2 text-2xl font-bold text-gray-900">CharuVerse</span>
         </div>
         <div className={`${theme.cardBg} ${theme.cardShadow} ${theme.cardRadius} p-8`}>
           {loggedIn ? (

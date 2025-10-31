@@ -118,9 +118,9 @@ export default function Slidebar() {
     <aside className={`w-64 h-full ${theme.sidebarBg} border-r border-gray-200 flex flex-col py-6 px-4`}>
       {/* Logo/Brand */}
       <div className="flex items-center mb-8 px-2">
-        <FaUserTie className="h-8 w-8 text-blue-600" />
+  <img src="/logo.png" alt="Alumni Connect logo" className="h-8 w-8 rounded-md border-2 border-blue-600 object-contain" loading="lazy" />
         <span className="ml-2 text-2xl font-bold text-gray-800 tracking-tight select-none">
-          Alumni Connect
+           CharuVerse
         </span>
       </div>
       {/* Navigation */}
@@ -183,9 +183,9 @@ export default function Slidebar() {
       {/* User Info */}
       {loggedIn && (
         <div className="mt-8 flex flex-col gap-2">
-          <div className="flex items-center bg-blue-50 rounded-lg px-4 py-3">
-            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-              <FaUserTie className="h-5 w-5 text-blue-600" />
+            <div className="flex items-center bg-blue-50 rounded-lg px-4 py-3">
+            <div className="h-8 w-8 rounded-md bg-white flex items-center justify-center overflow-hidden border-2 border-blue-600">
+              <img src="/logo.png" alt="avatar" className="h-8 w-8 rounded-md object-cover" loading="lazy" />
             </div>
             <div className="ml-3 min-w-0">
               <div className="text-base font-medium text-gray-800 truncate max-w-[8rem] md:max-w-[10rem]">

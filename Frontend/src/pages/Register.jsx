@@ -319,28 +319,27 @@ function Register() {
         pauseOnHover
         theme="light"
       />
-      
-      <div className={`min-h-screen ${theme.gradientBg} py-12 px-4 sm:px-6 lg:px-8`}>
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-6">
-              <div className="flex items-center">
-                <AcademicCapIcon className="h-12 w-12 text-blue-600" />
-                <span className="ml-2 text-2xl font-bold text-gray-900">Alumni Connect</span>
-              </div>
+      <div className={`min-h-screen ${theme.gradientBg} py-12 sm:px-6 lg:px-8`}>
+        <div className="max-w-6xl mx-auto bg-transparent">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            {/* Left: Illustration */}
+            <div className="hidden md:flex items-center justify-center h-[720px] bg-white rounded-lg overflow-hidden shadow-inner">
+              <div className="w-full h-full bg-center bg-cover" style={{ backgroundImage: `url('/leftside.png')`, backgroundPosition: 'center' }} aria-hidden="true" />
             </div>
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900">
-              Join Our Professional Network
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Create your account to connect with fellow alumni and advance your career
-            </p>
-          </div>
 
-          {/* Form */}
-          <div className={`${theme.cardBg} ${theme.cardShadow} ${theme.cardRadius} p-8`}>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Right: Registration card */}
+            <div className="w-full flex items-center justify-center">
+              <div className={`${theme.cardBg} ${theme.cardShadow} ${theme.cardRadius} p-8 w-full max-w-2xl`}>
+                {/* Header */}
+                <div className="text-center mb-6">
+                  <div className="flex justify-center mb-4 items-center">
+                    <img src="/main.png" alt="Charusat" className="h-24 mb-7 w-auto object-contain" loading="lazy" />
+                  </div>
+                  <h2 className="text-3xl font-bold tracking-tight text-gray-900">Join Our Professional Network</h2>
+                  <p className="mt-2 text-sm text-gray-600">Create your account to connect with fellow alumni and advance your career</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -651,6 +650,8 @@ function Register() {
           </div>
         </div>
       </div>
+    </div>
+  </div>
     </>
   );
 }

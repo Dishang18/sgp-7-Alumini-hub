@@ -64,7 +64,7 @@ export default function Navbar({ children }) {
       {/* Sidebar for desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 py-6 px-4">
         <div className="flex items-center mb-8 px-2">
-          <AcademicCapIcon className="h-8 w-8 text-blue-600" />
+          <img src="/logo.png" alt="Alumni Connect logo" className="h-8 w-8 rounded-md border-2 border-blue-600 object-contain" loading="lazy" />
           <span className="ml-2 text-2xl font-bold text-gray-800 tracking-tight select-none">
             Alumni Connect
           </span>
@@ -179,7 +179,7 @@ export default function Navbar({ children }) {
             <>
               <div className="flex items-center justify-between h-16 px-4">
                 <div className="flex items-center">
-                  <AcademicCapIcon className="h-8 w-8 text-blue-600" />
+                  <img src="/logo.png" alt="Alumni Connect logo" className="h-8 w-8 rounded-md border-2 border-blue-600 object-contain" loading="lazy" />
                   <span className="ml-2 text-2xl font-bold text-gray-800 tracking-tight select-none">
                     Alumni Connect
                   </span>

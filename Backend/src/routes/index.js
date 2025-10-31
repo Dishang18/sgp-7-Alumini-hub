@@ -13,6 +13,7 @@ const newsRoutes = require("./newsRoutes");
 const newsletterRoutes = require("./newsletterRoutes");
 const postRoutes = require("./postRoutes");
 const professorApprovalRoutes = require("./professorApprovalRoutes");
+const bulkImportRoute = require("./bulkImportRoute");
 
 router.get("/", (req, res) => {
   console.log("Server is up and running.");
@@ -29,6 +30,8 @@ router.use("/newsletter", newsletterRoutes);
 console.log("registerRoute 1");
 router.use("/auth", loginRoute);
 router.use("/", alumniListRoute);
+// Bulk import endpoint (multipart or JSON rows)
+router.use('/', bulkImportRoute);
 router.use("/jobs", jobRoutes);
 router.use("/professor", professorApprovalRoutes);
 // router.use('/', Route);

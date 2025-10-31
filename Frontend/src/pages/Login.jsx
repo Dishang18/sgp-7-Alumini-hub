@@ -147,25 +147,27 @@ function Login() {
         pauseOnHover
         theme="light"
       />
-      <div className={`min-h-screen ${theme.gradientBg} flex flex-col justify-center py-12 sm:px-6 lg:px-8`}>
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          {/* Logo and Header */}
-          <div className="flex justify-center">
-            <div className="flex items-center">
-              <AcademicCapIcon className="h-12 w-12 text-blue-600" />
-              <span className="ml-2 text-2xl font-bold text-gray-900">Alumni Connect</span>
+      {/* Two-column layout: left shows pica/image, right shows login card */}
+      <div className={`min-h-screen ${theme.gradientBg} py-12 sm:px-6 lg:px-8`}>
+        <div className="max-w-6xl mx-auto bg-transparent">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            {/* Left: Illustration / pica - place your image at public/leftside.png */}
+            <div className="hidden md:flex items-center justify-center h-[640px] bg-white rounded-lg overflow-hidden shadow-inner">
+              <img src="/leftside.png" alt="" aria-hidden="true" className="w-full h-full object-cover object-center" />
             </div>
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Welcome back
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to your professional alumni account
-          </p>
-        </div>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className={`${theme.cardBg} py-8 px-4 ${theme.cardShadow} ${theme.cardRadius} sm:px-10`}>
+            {/* Right: Login card */}
+            <div className="w-full flex items-center justify-center">
+              <div className={`${theme.cardBg} py-8 px-4 ${theme.cardShadow} ${theme.cardRadius} sm:px-10 w-full max-w-md`}>
+                <div className="sm:mx-auto sm:w-full sm:max-w-md mb-2 text-center">
+                  {/* Logo and Header */}
+                  {/* Main centered logo (replaces small logo + title) */}
+                  <div className="flex justify-center items-center">
+                    <img src="/main.png" alt="Alumni Connect" className="h-24 w-auto object-contain" loading="lazy" />
+                  </div>
+                  <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">Welcome back</h2>
+                  <p className="mt-2 text-center text-sm text-gray-600">Sign in to your professional alumni account</p>
+                </div>
             <form onSubmit={handleSubmit} className="space-y-6">
               
               {/* Email Field */}
@@ -302,11 +304,13 @@ function Login() {
                 </Link>
               </div>
             </form>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </div>                                                                                                                                                                                                                                                                                                                                                                                                                                                              
     </>
   );
-}
+  }
 
 export default Login;

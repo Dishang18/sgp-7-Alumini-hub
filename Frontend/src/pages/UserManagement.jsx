@@ -47,6 +47,8 @@ export default function UserManagement() {
   const [selectedRole, setSelectedRole] = useState('');
   const [availableDepartments, setAvailableDepartments] = useState([]);
   const [availableBranches, setAvailableBranches] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,9 +157,40 @@ export default function UserManagement() {
       fetchUnapprovedUsers();
       if (currentUser.role === 'admin') {
         fetchDepartments();
+        fetchJobs();
       }
     }
   }, [currentUser]);
+
+  const fetchJobs = async () => {
+    setJobsLoading(true);
+    try {
+      const res = await axios.get('/jobs/all', { withCredentials: true });
+      const jobsList = res.data?.data?.jobs || [];
+      setJobs(jobsList);
+    } catch (err) {
+      console.error('Error fetching jobs:', err?.response?.data || err.message);
+      setJobs([]);
+    }
+    setJobsLoading(false);
+  };
+
+  // SEO: set page title and meta description
+  useEffect(() => {
+    document.title = 'User Management - Alumni Hub';
+    const meta = document.querySelector('meta[name="description"]');
+    const desc = 'Manage students, alumni, professors and college admins. Approve, edit or remove users and filter by department, branch and role.';
+    if (meta) meta.setAttribute('content', desc);
+    else {
+      const m = document.createElement('meta');
+      m.name = 'description';
+      m.content = desc;
+      document.head.appendChild(m);
+    }
+    return () => {
+      // optional: leave meta in place for other pages
+    };
+  }, []);
 
   const handleApprove = async (userId) => {
     setLoading(true);
@@ -260,9 +293,11 @@ export default function UserManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 flex flex-col items-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-blue-100 flex flex-col items-center p-4">
       <div className="w-full max-w-6xl mx-auto mt-8 px-2 sm:px-4">
-        <h2 className="text-3xl font-bold mb-6 text-blue-700">User Management Dashboard</h2>
+        <header>
+          <h1 className="text-3xl font-bold mb-6 text-blue-700">User Management Dashboard</h1>
+        </header>
         
         {/* College Admin Registration Form (admin only) */}
         {currentUser?.role === 'admin' && (
@@ -355,6 +390,31 @@ export default function UserManagement() {
           </div>
         )}
 
+        {/* Admin Jobs Summary */}
+        {currentUser?.role === 'admin' && (
+          <div className="mb-6 bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-lg font-semibold mb-3 text-blue-700">Recent Jobs</h3>
+            {jobsLoading ? (
+              <div className="text-blue-600">Loading jobs...</div>
+            ) : jobs.length === 0 ? (
+              <div className="text-gray-600">No jobs posted yet.</div>
+            ) : (
+              <ul className="space-y-2">
+                {jobs.slice(0, 5).map(job => (
+                  <li key={job._id} className="p-3 border rounded-md">
+                    <div className="font-medium text-blue-700">{job.title}</div>
+                    <div className="text-sm text-gray-600">Dept: {job.department} {job.branch ? `• Branch: ${job.branch}` : ''}</div>
+                    <div className="text-xs text-gray-500">Posted by: {job.createdBy?.email || (job.createdBy || 'Unknown')}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-4">
+              <a href="/jobs" className="text-sm text-blue-600 underline">View all jobs</a>
+            </div>
+          </div>
+        )}
+
         {loading && <div className="flex justify-center"><div className="text-blue-600">Loading...</div></div>}
         {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
@@ -391,10 +451,40 @@ export default function UserManagement() {
             </nav>
           </div>
         </div>
-        {/* Table Content */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="w-full overflow-x-auto">
-            <table className="min-w-max divide-y divide-blue-200 bg-gradient-to-br from-blue-50 via-blue-100 to-white">
+        {/* Table Content (desktop) and Card list (mobile) */}
+        <section aria-labelledby="user-table-heading" className="bg-white rounded-lg shadow-md overflow-hidden">
+          <h2 id="user-table-heading" className="sr-only">Users</h2>
+
+          {/* Mobile: card view */}
+          <div className="md:hidden p-4 space-y-4">
+            {currentUsersPage.map((user) => (
+              <article key={user._id} className="border rounded-lg p-4 bg-white shadow-sm" aria-labelledby={`user-${user._id}-name`}>
+                <h3 id={`user-${user._id}-name`} className="text-lg font-semibold text-blue-700">{user.firstName} {user.lastName}</h3>
+                <p className="text-sm text-gray-600">{user.email}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{user.role === 'collegeadmin' ? 'College Admin' : user.role}</span>
+                  <span className="text-sm text-gray-500">{user.department || '-'}</span>
+                  <span className="text-sm text-gray-500">{user.branch || '-'}</span>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  {activeTab === 'pending' && canApprove(currentUser, user) && (
+                    <button onClick={() => handleApprove(user._id)} aria-label={`Approve ${user.email}`} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs">Approve</button>
+                  )}
+                  {canEditOrDelete(currentUser, user) && (
+                    <>
+                      <button onClick={() => openEditModal(user)} aria-label={`Edit ${user.email}`} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs">Edit</button>
+                      <button onClick={() => handleDelete(user._id)} aria-label={`Delete ${user.email}`} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs">Delete</button>
+                    </>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* Desktop/table view */}
+          <div className="hidden md:block w-full overflow-x-auto">
+            <table className="min-w-full divide-y divide-blue-200 bg-gradient-to-br from-blue-50 via-blue-100 to-white">
+              <caption className="sr-only">List of users with actions to approve, edit or delete</caption>
               <thead className="bg-gradient-to-r from-blue-100 via-blue-50 to-white">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Name</th>
@@ -409,9 +499,7 @@ export default function UserManagement() {
               <tbody className="bg-white divide-y divide-blue-100">
                 {currentUsersPage.map(user => (
                   <tr key={user._id} className="hover:bg-blue-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {user.firstName} {user.lastName}
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -419,43 +507,22 @@ export default function UserManagement() {
                         user.role === 'alumni' ? 'bg-green-100 text-green-800' :
                         user.role === 'professor' ? 'bg-purple-100 text-purple-800' :
                         'bg-gray-100 text-gray-800'
-                      }`}>
-                        {user.role === 'collegeadmin' ? 'College Admin' : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                      </span>
+                      }`}>{user.role === 'collegeadmin' ? 'College Admin' : user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.department || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.branch || '-'}</td>
                     {activeTab === 'approved' && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                          Approved
-                        </span>
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Approved</span></td>
                     )}
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex flex-col gap-2 md:flex-row md:gap-2">
                         {activeTab === 'pending' && canApprove(currentUser, user) && (
-                          <button 
-                            onClick={() => handleApprove(user._id)} 
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs transition duration-200"
-                          >
-                            Approve
-                          </button>
+                          <button onClick={() => handleApprove(user._id)} className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs transition duration-200">Approve</button>
                         )}
                         {canEditOrDelete(currentUser, user) && (
                           <>
-                            <button 
-                              onClick={() => openEditModal(user)} 
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs transition duration-200"
-                            >
-                              Edit
-                            </button>
-                            <button 
-                              onClick={() => handleDelete(user._id)} 
-                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs transition duration-200"
-                            >
-                              Delete
-                            </button>
+                            <button onClick={() => openEditModal(user)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs transition duration-200">Edit</button>
+                            <button onClick={() => handleDelete(user._id)} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs transition duration-200">Delete</button>
                           </>
                         )}
                       </div>
@@ -465,13 +532,11 @@ export default function UserManagement() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Empty State */}
           {currentUsers.length === 0 && (
             <div className="text-center py-8">
-              <div className="text-blue-500">
-                {activeTab === 'approved' ? 'No approved users found.' : 'No pending approvals.'}
-              </div>
+              <div className="text-blue-500">{activeTab === 'approved' ? 'No approved users found.' : 'No pending approvals.'}</div>
             </div>
           )}
 
@@ -479,71 +544,26 @@ export default function UserManagement() {
           {totalPages > 1 && (
             <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-blue-200 sm:px-6">
               <div className="flex-1 flex justify-between sm:hidden">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
+                <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="relative inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+                <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="ml-3 relative inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
               </div>
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm text-blue-700">
-                    Showing <span className="font-medium">{indexOfFirstUser + 1}</span> to{' '}
-                    <span className="font-medium">{Math.min(indexOfLastUser, currentUsers.length)}</span> of{' '}
-                    <span className="font-medium">{currentUsers.length}</span> results
-                  </p>
+                  <p className="text-sm text-blue-700">Showing <span className="font-medium">{indexOfFirstUser + 1}</span> to <span className="font-medium">{Math.min(indexOfLastUser, currentUsers.length)}</span> of <span className="font-medium">{currentUsers.length}</span> results</p>
                 </div>
                 <div>
                   <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-blue-300 bg-white text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <span className="sr-only">Previous</span>
-                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </button>
+                    <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-blue-300 bg-white text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"><span className="sr-only">Previous</span><svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg></button>
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
-                      <button
-                        key={pageNumber}
-                        onClick={() => handlePageChange(pageNumber)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          pageNumber === currentPage
-                            ? 'z-10 bg-blue-100 border-blue-500 text-blue-700'
-                            : 'bg-white border-blue-300 text-blue-700 hover:bg-blue-50'
-                        }`}
-                      >
-                        {pageNumber}
-                      </button>
+                      <button key={pageNumber} onClick={() => handlePageChange(pageNumber)} className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${pageNumber === currentPage ? 'z-10 bg-blue-100 border-blue-500 text-blue-700' : 'bg-white border-blue-300 text-blue-700 hover:bg-blue-50'}`}>{pageNumber}</button>
                     ))}
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-blue-300 bg-white text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <span className="sr-only">Next</span>
-                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </button>
+                    <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-blue-300 bg-white text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"><span className="sr-only">Next</span><svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg></button>
                   </nav>
                 </div>
               </div>
             </div>
           )}
-        </div>
-
+        </section>
         {/* Edit Modal */}
         {showModal && editUser && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
@@ -589,6 +609,6 @@ export default function UserManagement() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }
