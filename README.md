@@ -19,7 +19,7 @@ Alumni Connect is a web application designed to enhance connections within alumn
 
 ## Getting Started
 <!-- Sreenshot -->
-![Screenshot](https://github.com/Kumailrizvi786/Alumni-Connect/blob/main/Frontend/src/assets/img/screenshots.jpg)
+![Screenshot](Frontend/src/assets/img/homepage.png)
 <!-- Sreenshot -->
 ### Prerequisites
 * [Node.js](https://nodejs.org/en/download/)
