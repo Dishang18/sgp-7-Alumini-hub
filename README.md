@@ -1,10 +1,6 @@
 # Alumni-Connect
 Alumni Connect is a web application designed to enhance connections within alumni communities. It provides a platform for organizing events, sharing job opportunities, and facilitating communication among alumni.
 
-# Old Version
-The old version of this Web Application was class component-based.
-* [Have a look](https://github.com/SahilAli8808/Alumni-Connects)
-
 ## Key Features
 
 - **Create Events:** Easily organize and manage alumni events.
@@ -32,12 +28,9 @@ The old version of this Web Application was class component-based.
 ### Installation
 1. Clone the repo
 ```sh
-git clone https://github.com/SahilAli8808/Alumni-Connect.git
+git clone (https://github.com/Dishang18/sgp-7-Alumini-hub.git)
 ```
-or 
-```sh
-git clone https://github.com/Kumailrizvi786/Alumni-Connect.git
-```
+
 1.2 Change directory
 ```sh   
 cd Alumni-Connect
@@ -79,8 +72,8 @@ npm start
 * [Mongoose](https://mongoosejs.com/)
 
 ## Authors
-* [**Sahil Ali**](https://www.linkedin.com/in/sahilali20/)
-* [**Syed Kumail Rizvi**](https://www.linkedin.com/in/syed-kumail-rizvi/)
+* [**Disahng Patel**]()
+* [**Veer Rana**](www.linkedin.com/in/veer-rana-273747259)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
